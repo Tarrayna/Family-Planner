@@ -1,19 +1,39 @@
-# Family Planner
+# Family Planner — handoff
 
-A self-hosted family planner app made up of a couple of Docker containers.
+Design lives in the Omelette project; this folder is the buildable scaffolding.
 
-## Overview
+## Contents
 
-- **Frontend**
-  - A read-only display view, meant to be shown on a Raspberry Pi (e.g. a wall-mounted dashboard).
-  - Displays a calendar and other at-a-glance info.
-  - UI will be designed with Claude.
-  - A phone-friendly version for viewing and editing the calendar and tasks.
+- `SPEC.md` — the backend specification. Hand this to Claude Code as the brief.
+- `docker-compose.yml` — proxy / api / db.
+- `Caddyfile` — TLS + static frontend + `/api` proxy. Read the comment at the
+  top: the PWA will not install without a trusted certificate.
+- `.env.example` — copy to `.env` and fill in.
+- `web/manifest.json`, `web/sw.js` — the PWA pieces. Drop your built frontend
+  alongside them in `web/`; you still need to add `icons/` (192, 512, and a
+  maskable 512) and link the manifest + register the worker from `index.html`:
 
-- **Backend**
-  - Server that owns the calendar and task data.
-  - Syncs with Google Calendar, with the goal of supporting additional external sources over time.
+```html
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#161826">
+<script>
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  }
+</script>
+```
 
-## Status
+## First run
 
-Early planning / setup. Containers and app structure are still to come.
+```sh
+cp .env.example .env      # fill it in
+docker compose up -d
+```
+
+Then, on each phone: open the site, trust the CA if you used `tls internal`,
+tap your name, and Add to Home Screen.
+
+## Next
+
+`api/` is empty on purpose — build it against `SPEC.md`. Start with people +
+identity, then plain tasks, then recurrence.

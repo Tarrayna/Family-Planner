@@ -1,0 +1,32 @@
+# planner.home — LAN only.
+#
+# The PWA needs real HTTPS for its service worker. Two workable routes:
+#
+#  A) You own a domain: use a DNS-01 challenge so no port needs to be open.
+#     Requires a Caddy build with your DNS provider's plugin.
+#
+#  B) Internal CA (below): Caddy issues its own cert. Works immediately, but
+#     each device must trust Caddy's root CA once
+#     (/data/caddy/pki/authorities/local/root.crt) or the service worker
+#     will not register.
+
+planner.home {
+	tls internal
+
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
+	}
+
+	encode gzip
+	header {
+		# the service worker must never be cached stale
+		@sw path /sw.js
+		Cache-Control @sw "no-cache"
+	}
+}
