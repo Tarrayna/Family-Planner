@@ -12,6 +12,9 @@
 </head>
 <body>
 <script>
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  }
   // First visit picks a person; after that go straight to today.
   location.replace(localStorage.getItem('planner.person') ? '/today.html' : '/who.html');
 </script>

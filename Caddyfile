@@ -10,7 +10,16 @@
 #     (/data/caddy/pki/authorities/local/root.crt) or the service worker
 #     will not register.
 
-planner.home {
+#  Dev-only: this box's current LAN IP is listed as an alternate address so
+#  phones can reach it without any router DNS setup. Update it if the IP
+#  changes, or drop it once planner.home resolves for real. default_sni is
+#  required too: browsers send no SNI for a literal IP, so without it Caddy
+#  can't pick which cert to present and the handshake fails.
+{
+	default_sni 192.168.1.125
+}
+
+planner.home, 192.168.1.125 {
 	tls internal
 
 	handle /api/* {
@@ -24,9 +33,8 @@ planner.home {
 	}
 
 	encode gzip
-	header {
-		# the service worker must never be cached stale
-		@sw path /sw.js
-		Cache-Control @sw "no-cache"
-	}
+
+	# the service worker must never be cached stale
+	@sw path /sw.js
+	header @sw Cache-Control "no-cache"
 }
