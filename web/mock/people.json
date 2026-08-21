@@ -1,0 +1,23 @@
+[
+  {
+    "id": "p1",
+    "name": "Nicholas",
+    "color": "oklch(0.70 0.14 235)",
+    "photo_url": "https://i.pravatar.cc/160?img=12",
+    "has_phone": true
+  },
+  {
+    "id": "p2",
+    "name": "Tarrayna",
+    "color": "oklch(0.70 0.15 330)",
+    "photo_url": "https://i.pravatar.cc/160?img=47",
+    "has_phone": true
+  },
+  {
+    "id": "p3",
+    "name": "Mackenzie",
+    "color": "oklch(0.75 0.15 140)",
+    "photo_url": null,
+    "has_phone": false
+  }
+]

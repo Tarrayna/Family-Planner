@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161826">
+<title>Who's using this phone?</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="phone" style="justify-content:center;gap:32px;padding:0 24px">
+  <div>
+    <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:500">Family Planner</div>
+    <h1 style="font-size:32px;margin-top:8px">Who's using this phone?</h1>
+    <p class="muted" style="font-size:14px;margin:10px 0 0">Tap your name. This phone will stay signed in — you won't be asked again.</p>
+  </div>
+  <div id="list" style="display:flex;flex-direction:column;gap:10px"></div>
+  <p class="muted" style="font-size:11.5px;margin:0">Home network only — nothing leaves the house. Change this later in Settings.</p>
+</main>
+<script type="module">
+import { get, post, setWhoami } from './js/api.js';
+import { el, avatar, $ } from './js/ui.js';
+
+const people = await get('/api/people');
+const list = $('#list');
+for (const p of people) {
+  list.append(el('button', {
+    class: 'listrow', style: 'min-height:64px',
+    onclick: async () => { setWhoami(p.id); await post('/api/session', { person_id: p.id }); location.href = 'today.html'; },
+  },
+    avatar(p, 34, 2),
+    el('div', { class: 'grow' },
+      el('div', { style: 'font-size:16px;font-weight:500' }, p.name),
+      !p.has_phone && el('div', { class: 'muted', style: 'font-size:11.5px' }, 'No phone — tasks checked off by a parent'))
+  ));
+}
+list.append(el('a', { class: 'listrow dashed', href: '/person.html?new=1' },
+  el('div', { class: 'ava', style: 'width:34px;height:34px;border:1px dashed var(--n700);font-size:18px;color:var(--n500)' }, '+'),
+  el('div', { class: 'grow muted', style: 'font-size:15px' }, 'Someone else')));
+</script><script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+</script>
+</body>
+</html>

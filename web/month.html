@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161826">
+<title>Calendar</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="phone">
+  <div class="topbar">
+    <h1 id="title">—</h1>
+    <div style="display:flex;gap:8px">
+      <button class="back" id="prev" aria-label="Previous month">‹</button>
+      <button class="back" id="next" aria-label="Next month">›</button>
+    </div>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="cal" id="cal"></div>
+  <div class="daysheet grow">
+    <div class="label" id="dayTitle">—</div>
+    <div id="dayList"></div>
+  </div>
+</main>
+<script type="module">
+import { get } from './js/api.js';
+import { el, avatar, byId, fmtTime, $, MONTH, DOW, WEEKDAY } from './js/ui.js';
+
+const people = byId(await get('/api/people'));
+const data = await get('/api/range?from=2026-08-01&to=2026-08-31');
+let cursor = new Date('2026-08-01T00:00:00');
+let selected = '2026-08-09';
+
+$('#legend').replaceChildren(...Object.values(people).map((p) =>
+  el('div', {}, avatar(p, 20), p.name)));
+
+function eventsOn(iso) { return data.events.filter((e) => e.starts_at.slice(0, 10) === iso); }
+
+function draw() {
+  $('#title').textContent = `${MONTH[cursor.getMonth()]} ${cursor.getFullYear()}`;
+  const cal = $('#cal'); cal.replaceChildren();
+  for (const d of DOW) cal.append(el('div', { class: 'dow' }, d[0]));
+
+  const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+  const start = first.getDay();
+  const days = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+
+  for (let i = 0; i < 42; i++) {
+    const n = i - start + 1;
+    const inMonth = n >= 1 && n <= days;
+    const iso = inMonth
+      ? `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(n).padStart(2, '0')}`
+      : null;
+    const cell = el('button', {
+      class: 'day', 'aria-selected': iso === selected ? 'true' : 'false',
+      onclick: () => { if (iso) { selected = iso; draw(); } },
+    });
+    if (inMonth) {
+      cell.append(el('div', { class: 'n' }, String(n)));
+      const seen = new Set(), faces = el('div', { class: 'faces' });
+      for (const e of eventsOn(iso)) {
+        if (seen.has(e.assignee_id)) continue;
+        seen.add(e.assignee_id);
+        if (seen.size > 3) break;
+        faces.append(avatar(people[e.assignee_id], 15, 1.5));
+      }
+      cell.append(faces);
+    }
+    cal.append(cell);
+  }
+
+  const d = new Date(selected + 'T00:00:00');
+  $('#dayTitle').textContent = `${WEEKDAY[d.getDay()]}, ${MONTH[d.getMonth()]} ${d.getDate()}`;
+  const list = $('#dayList'); list.replaceChildren();
+  const evs = eventsOn(selected).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  if (!evs.length) list.append(el('div', { class: 'muted', style: 'font-size:13px;padding:8px 0' }, 'Nothing scheduled.'));
+  for (const e of evs) {
+    list.append(el('div', { style: 'display:flex;align-items:center;gap:11px;padding:7px 0' },
+      avatar(people[e.assignee_id], 28),
+      el('div', { style: 'width:56px;flex:none;font-size:12.5px;color:var(--a300);font-weight:500' }, fmtTime(e.starts_at)),
+      el('div', { class: 'grow', style: 'font-size:14px;min-width:0' }, e.title)));
+  }
+}
+$('#prev').onclick = () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1); draw(); };
+$('#next').onclick = () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1); draw(); };
+draw();
+</script><script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+</script>
+</body>
+</html>

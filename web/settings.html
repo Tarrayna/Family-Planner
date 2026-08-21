@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161826">
+<title>Settings</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="phone">
+  <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><a class="back" href="today.html">‹</a><h1>Settings</h1></div></div>
+  <div class="section">
+    <div class="label">This phone</div>
+    <a class="listrow" id="me" href="who.html"></a>
+  </div>
+  <div class="section">
+    <div class="label">TV display</div>
+    <div id="layouts" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+  <div class="section">
+    <div class="label">Options</div>
+    <div id="options" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+  <div class="section">
+    <div class="label">Family</div>
+    <a class="listrow" href="family.html"><div class="grow" style="font-size:15px">People and colors</div><div class="chev">›</div></a>
+    <a class="listrow" href="calendars.html"><div class="grow" style="font-size:15px">Google calendars</div><div class="chev">›</div></a>
+    <a class="listrow" href="vacation.html"><div class="grow" style="font-size:15px">Vacation mode</div><div class="chev">›</div></a>
+  </div>
+  <p class="muted" style="font-size:11.5px;padding:12px 20px">Changes apply to the TV within a minute — no restart needed.</p>
+</main>
+<script type="module">
+import { get, patch, whoami } from './js/api.js';
+import { el, avatar, byId, $ } from './js/ui.js';
+
+const people = byId(await get('/api/people'));
+const cfg = await get('/api/settings/display');
+const me = people[whoami()] || Object.values(people)[0];
+
+$('#me').replaceChildren(avatar(me, 34, 2),
+  el('div', { class: 'grow' }, el('div', { style: 'font-size:15px;font-weight:500' }, me.name),
+    el('div', { class: 'muted', style: 'font-size:11.5px' }, 'Tap to switch')),
+  el('div', { class: 'chev' }, '›'));
+
+const LAYOUTS = [
+  ['today', 'Today + upcoming', "Schedule, tasks and what's next"],
+  ['week', 'Week', 'Seven columns, events and tasks'],
+  ['month', 'Month', 'Full grid with faces per day'],
+];
+function drawLayouts() {
+  $('#layouts').replaceChildren(...LAYOUTS.map(([id, title, sub]) => {
+    const on = cfg.layout === id;
+    return el('button', { class: 'listrow', 'aria-pressed': on ? 'true' : 'false',
+      onclick: async () => { cfg.layout = id; drawLayouts(); await patch('/api/settings/display', { layout: id }); } },
+      el('div', { class: 'ava', style: `width:18px;height:18px;border:1.5px solid ${on ? 'var(--accent)' : 'var(--n600)'};background-color:${on ? 'var(--accent)' : 'transparent'};box-shadow:${on ? 'inset 0 0 0 4px var(--bg)' : 'none'}` }),
+      el('div', { class: 'grow' },
+        el('div', { style: 'font-size:15px;font-weight:500' + (on ? ';color:var(--a100)' : '') }, title),
+        el('div', { class: 'muted', style: 'font-size:11.5px' }, sub)));
+  }));
+}
+drawLayouts();
+
+const OPTS = [['show_weather', 'Show weather'], ['show_upcoming', 'Show upcoming tasks']];
+function drawOptions() {
+  $('#options').replaceChildren(
+    ...OPTS.map(([key, title]) => el('button', { class: 'listrow',
+      onclick: async () => { cfg[key] = !cfg[key]; drawOptions(); await patch('/api/settings/display', { [key]: cfg[key] }); } },
+      el('div', { class: 'grow', style: 'font-size:15px' }, title),
+      el('div', { class: 'switch', role: 'switch', 'aria-checked': cfg[key] ? 'true' : 'false' }, el('i', {})))),
+    el('div', { class: 'listrow' },
+      el('div', { class: 'grow', style: 'font-size:15px' }, 'Time format'),
+      el('div', { class: 'pillrow' }, ...['12h', '24h'].map((t) => el('button', {
+        class: 'pill', 'aria-pressed': cfg.time_format === t ? 'true' : 'false', style: 'min-height:36px;padding:0 12px;font-size:12px',
+        onclick: async () => { cfg.time_format = t; drawOptions(); await patch('/api/settings/display', { time_format: t }); },
+      }, t)))));
+}
+drawOptions();
+</script><script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+</script>
+</body>
+</html>

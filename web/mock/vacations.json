@@ -1,0 +1,79 @@
+[
+  {
+    "id": "v1",
+    "name": "Gulf Shores",
+    "starts_on": "2026-08-14",
+    "ends_on": "2026-08-22",
+    "pause_repeating": true,
+    "pause_overdue": true,
+    "hide_tasks_on_tv": true,
+    "keep_calendar_events": false,
+    "checklist": [
+      {
+        "group": "House",
+        "items": [
+          {
+            "id": "v1a",
+            "title": "Hold the mail",
+            "note": "USPS — do 2 days ahead",
+            "assignee_id": "p1",
+            "done": true
+          },
+          {
+            "id": "v1b",
+            "title": "Set thermostat to 78°",
+            "assignee_id": "p1"
+          },
+          {
+            "id": "v1c",
+            "title": "Ask Dave to water plants",
+            "assignee_id": "p2",
+            "done": true
+          },
+          {
+            "id": "v1d",
+            "title": "Take out all trash",
+            "assignee_id": "p3"
+          }
+        ]
+      },
+      {
+        "group": "Pets & kids",
+        "items": [
+          {
+            "id": "v1e",
+            "title": "Board the dog",
+            "note": "Drop-off Thu 5pm",
+            "assignee_id": "p2"
+          },
+          {
+            "id": "v1f",
+            "title": "Pack swim gear",
+            "assignee_id": "p3"
+          }
+        ]
+      },
+      {
+        "group": "Travel",
+        "items": [
+          {
+            "id": "v1g",
+            "title": "Fill up the car",
+            "assignee_id": "p1"
+          },
+          {
+            "id": "v1h",
+            "title": "Print reservations",
+            "assignee_id": "p2",
+            "done": true
+          },
+          {
+            "id": "v1i",
+            "title": "Charge the tablets",
+            "assignee_id": "p3"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161826">
+<title>Repeats</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="sheet-scrim">
+  <div class="sheet">
+    <div class="grabber"></div>
+    <div class="sheet-head"><h2>Repeats</h2><button id="done" style="color:var(--accent);font-size:14px">Done</button></div>
+    <div class="pillrow" id="freq"></div>
+    <div id="intervalRow" style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:8px 14px;border-radius:var(--r-md);background:var(--bg)">
+      <div style="font-size:15px">Every</div>
+      <div class="stepper"><button id="dec">−</button><div class="val" id="intervalVal">1 week</div><button class="plus" id="inc">+</button></div>
+    </div>
+    <div class="field" id="daysRow"><span>On days</span><div class="pillrow" id="days"></div></div>
+    <div class="field" id="monthRow"><span>On</span><div style="display:flex;flex-direction:column;gap:8px" id="monthModes"></div></div>
+    <div class="field" id="endsRow"><span>Ends</span><div style="display:flex;flex-direction:column;gap:8px" id="ends"></div></div>
+    <p class="muted" style="font-size:12.5px;text-align:center;margin:0" id="summary"></p>
+  </div>
+</div>
+<script type="module">
+import { el, $, DOW } from './js/ui.js';
+
+const state = { freq: 'Weekly', n: 1, days: [new Date().getDay()], monthMode: 'pattern', ends: 'never', until: '2026-10-28', count: 12 };
+const BY = ['SU','MO','TU','WE','TH','FR','SA'];
+
+function unit() { return state.freq === 'Daily' ? 'day' : state.freq === 'Weekly' ? 'week' : 'month'; }
+function intervalLabel() { return state.n + ' ' + unit() + (state.n > 1 ? 's' : ''); }
+
+function rrule() {
+  if (state.freq === 'None') return null;
+  const parts = ['FREQ=' + state.freq.toUpperCase()];
+  if (state.n > 1) parts.push('INTERVAL=' + state.n);
+  if (state.freq === 'Weekly' && state.days.length) parts.push('BYDAY=' + state.days.map((d) => BY[d]).join(','));
+  if (state.freq === 'Monthly' && state.monthMode === 'pattern') parts.push('BYDAY=2WE');
+  if (state.ends === 'date') parts.push('UNTIL=' + state.until.replace(/-/g, '') + 'T000000Z');
+  if (state.ends === 'count') parts.push('COUNT=' + state.count);
+  return parts.join(';');
+}
+
+function summary() {
+  if (state.freq === 'None') return 'Does not repeat';
+  const every = state.n === 1 ? unit() : intervalLabel();
+  if (state.freq === 'Daily') return state.n === 1 ? 'Every day' : 'Every ' + intervalLabel();
+  if (state.freq === 'Weekly') {
+    const names = state.days.slice().sort().map((d) => DOW[d] + 'day').map((s) => s.replace('Sunday day', 'Sunday'));
+    return 'Every ' + every + (names.length ? ' on ' + names.join(', ') : '');
+  }
+  return (state.monthMode === 'pattern' ? 'The 2nd Wednesday of every ' : 'Day 12 of every ') + every;
+}
+function endsLabel() {
+  if (state.freq === 'None') return 'One time only';
+  return state.ends === 'never' ? 'Never ends' : state.ends === 'date' ? 'Until ' + state.until : `Ends after ${state.count} times`;
+}
+
+function pill(label, on, onclick, extra = {}) {
+  return el('button', { class: 'pill', 'aria-pressed': on ? 'true' : 'false', style: 'flex:1', onclick, ...extra }, label);
+}
+function radio(label, on, onclick, value) {
+  return el('button', { class: 'listrow', 'aria-pressed': on ? 'true' : 'false', style: 'background:transparent;box-shadow:inset 0 0 0 1px var(--divider)' + (on ? ';background:var(--a900);box-shadow:inset 0 0 0 1px var(--accent)' : ''), onclick },
+    el('div', { class: 'ava', style: `width:16px;height:16px;border:1.5px solid ${on ? 'var(--accent)' : 'var(--n600)'};background-color:${on ? 'var(--accent)' : 'transparent'};box-shadow:${on ? 'inset 0 0 0 3.5px var(--surface)' : 'none'}` }),
+    el('div', { class: 'grow', style: 'font-size:14.5px' }, label),
+    value && el('div', { style: 'font-size:13.5px;color:var(--a300);border:1px solid var(--divider);border-radius:var(--r-sm);padding:5px 10px;white-space:nowrap' }, value));
+}
+
+function draw() {
+  $('#freq').replaceChildren(...['None', 'Daily', 'Weekly', 'Monthly'].map((n) =>
+    pill(n, state.freq === n, () => { state.freq = n; draw(); })));
+
+  const repeating = state.freq !== 'None';
+  $('#intervalRow').style.display = repeating ? 'flex' : 'none';
+  $('#daysRow').style.display = state.freq === 'Weekly' ? 'block' : 'none';
+  $('#monthRow').style.display = state.freq === 'Monthly' ? 'block' : 'none';
+  $('#endsRow').style.display = repeating ? 'block' : 'none';
+  $('#intervalVal').textContent = intervalLabel();
+
+  $('#days').replaceChildren(...DOW.map((d, i) =>
+    pill(d[0], state.days.includes(i), () => {
+      state.days = state.days.includes(i) ? state.days.filter((x) => x !== i) : [...state.days, i];
+      draw();
+    }, { style: 'flex:1;padding:0;min-height:40px' })));
+
+  $('#monthModes').replaceChildren(
+    radio('Day 12 of the month', state.monthMode === 'day', () => { state.monthMode = 'day'; draw(); }),
+    radio('The 2nd Wednesday', state.monthMode === 'pattern', () => { state.monthMode = 'pattern'; draw(); }));
+
+  $('#ends').replaceChildren(
+    radio('Never', state.ends === 'never', () => { state.ends = 'never'; draw(); }),
+    radio('On date', state.ends === 'date', () => { state.ends = 'date'; draw(); }, state.until),
+    radio('After', state.ends === 'count', () => { state.ends = 'count'; draw(); }, state.count + ' times'));
+
+  $('#summary').textContent = repeating ? summary() + ', ' + endsLabel().toLowerCase() : summary();
+}
+$('#dec').onclick = () => { state.n = Math.max(1, state.n - 1); draw(); };
+$('#inc').onclick = () => { state.n = Math.min(30, state.n + 1); draw(); };
+$('#done').onclick = () => {
+  sessionStorage.setItem('planner.rule', JSON.stringify({
+    rrule: rrule(), summary: summary(), ends_label: endsLabel(),
+    until: state.ends === 'date' ? state.until : null,
+    count: state.ends === 'count' ? state.count : null,
+  }));
+  history.back();
+};
+draw();
+</script><script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+</script>
+</body>
+</html>

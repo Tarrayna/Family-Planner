@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161826">
+<title>Vacation</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="phone">
+  <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><a class="back" href="settings.html">‹</a><h1>Vacation</h1></div></div>
+  <form class="section" id="form">
+    <label class="field"><span>Trip</span><input class="input" name="name" id="name" placeholder="e.g. Gulf Shores"></label>
+    <div class="row">
+      <label class="field"><span>Leaves</span><input class="input" type="date" name="starts_on" id="starts"></label>
+      <label class="field"><span>Returns</span><input class="input" type="date" name="ends_on" id="ends"></label>
+    </div>
+  </form>
+  <div class="section">
+    <div class="label">While away</div>
+    <div id="toggles" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+  <div class="section">
+    <div class="label">Pre-trip checklist</div>
+    <div id="checklist" style="display:flex;flex-direction:column;gap:14px"></div>
+  </div>
+  <div class="section"><button class="btn btn-primary btn-block" id="save">Start vacation mode</button></div>
+  <div style="height:32px"></div>
+</main>
+<script type="module">
+import { get, post } from './js/api.js';
+import { el, avatar, byId, $ } from './js/ui.js';
+
+const people = byId(await get('/api/people'));
+const vacs = await get('/api/vacations');
+const v = vacs[0] || { name: '', starts_on: '', ends_on: '', pause_repeating: true, pause_overdue: true, hide_tasks_on_tv: true, keep_calendar_events: false, checklist: [] };
+$('#name').value = v.name; $('#starts').value = v.starts_on; $('#ends').value = v.ends_on;
+
+const TOGGLES = [
+  ['pause_repeating', 'Pause repeating chores', 'Resume the day you get back'],
+  ['pause_overdue', 'Stop overdue counting', "Nothing goes late while you're away"],
+  ['hide_tasks_on_tv', 'Hide tasks on the TV', 'Show the trip countdown instead'],
+  ['keep_calendar_events', 'Keep calendar events', 'Google events still show'],
+];
+function drawToggles() {
+  $('#toggles').replaceChildren(...TOGGLES.map(([key, title, sub]) => el('button', {
+    class: 'listrow', style: 'min-height:60px', type: 'button',
+    onclick: () => { v[key] = !v[key]; drawToggles(); },
+  },
+    el('div', { class: 'grow' },
+      el('div', { style: 'font-size:14.5px' }, title),
+      el('div', { class: 'muted', style: 'font-size:11.5px;line-height:1.4' }, sub)),
+    el('div', { class: 'switch', role: 'switch', 'aria-checked': v[key] ? 'true' : 'false' }, el('i', {})))));
+}
+drawToggles();
+
+const box = $('#checklist');
+if (!v.checklist.length) {
+  box.append(el('button', { class: 'listrow', style: 'min-height:56px;background:var(--a900);box-shadow:inset 0 0 0 1px var(--accent)' },
+    el('div', { class: 'grow' },
+      el('div', { style: 'font-size:14.5px;color:var(--a100)' }, 'Generate from past trips'),
+      el('div', { class: 'muted', style: 'font-size:11.5px' }, 'Starts 3 days before you leave')),
+    el('div', { class: 'chev' }, '›')));
+} else {
+  for (const g of v.checklist) {
+    const items = el('div', { style: 'display:flex;flex-direction:column;gap:4px' });
+    for (const i of g.items) {
+      const check = el('div', { class: 'check', role: 'checkbox', 'aria-checked': i.done ? 'true' : 'false' }, i.done ? '✓' : '');
+      items.append(el('button', { class: 'task', 'data-done': i.done ? '1' : '0',
+        onclick: async (e) => {
+          const row = e.currentTarget, now = row.dataset.done !== '1';
+          row.dataset.done = now ? '1' : '0';
+          check.setAttribute('aria-checked', String(now)); check.textContent = now ? '✓' : '';
+          await post(`/api/tasks/${i.id}/complete`, { done: now });
+        } },
+        check,
+        el('div', { class: 'grow', style: 'min-width:0' },
+          el('div', { class: 'title' }, i.title),
+          i.note && el('div', { class: 'meta' }, i.note)),
+        avatar(people[i.assignee_id], 24)));
+    }
+    box.append(el('div', { style: 'display:flex;flex-direction:column;gap:6px' }, el('div', { class: 'label' }, g.group), items));
+  }
+  box.append(el('button', { class: 'listrow dashed', style: 'min-height:46px' },
+    el('div', { style: 'font-size:16px;color:var(--n500)' }, '+'),
+    el('div', { class: 'grow muted', style: 'font-size:13.5px' }, 'Add an item')));
+}
+
+$('#save').onclick = async () => {
+  const d = Object.fromEntries(new FormData($('#form')));
+  await post('/api/vacations', { ...d, pause_repeating: v.pause_repeating, pause_overdue: v.pause_overdue,
+    hide_tasks_on_tv: v.hide_tasks_on_tv, keep_calendar_events: v.keep_calendar_events });
+  location.href = 'today.html';
+};
+</script><script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+</script>
+</body>
+</html>

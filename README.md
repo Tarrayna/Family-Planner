@@ -33,6 +33,68 @@ docker compose up -d
 Then, on each phone: open the site, trust the CA if you used `tls internal`,
 tap your name, and Add to Home Screen.
 
+## The frontend
+
+`web/` is a complete, buildless frontend — plain HTML, CSS and ES modules. Caddy
+serves it as-is; there is nothing to compile.
+
+| File | Screen |
+| --- | --- |
+| `index.html` | Entry — redirects to who / today |
+| `who.html` | "Who's using this phone?" — one tap, then a cookie |
+| `today.html` | Phone Today — schedule + due-today (overdue included) |
+| `month.html` | Phone month calendar with faces per day |
+| `task.html` | Add / edit a task |
+| `repeat.html` | Repeat rule builder — emits a real RRULE |
+| `family.html` · `person.html` | Family list; edit anyone (name, colour, photo, phone) |
+| `calendars.html` | Per-person Google calendars + auto-assign |
+| `vacation.html` | Vacation setup and the pre-trip checklist |
+| `settings.html` | This phone, TV layout, options |
+| `tv.html` · `tv-week.html` · `tv-month.html` | The Pi display — point the kiosk at `/tv.html` |
+
+Supporting files: `css/app.css` (all styling, one file), `js/api.js` (fetch with
+mock fallback), `js/ui.js` (render helpers, avatars), `js/tv.js` (TV chrome —
+clock, weather, tasks rail, QR).
+
+### It runs right now
+
+`mock/*.json` mirrors the API shapes in SPEC.md. `js/api.js` tries the real
+endpoint first and silently falls back to the mock, so every screen works before
+the backend exists. Serve the folder and open it:
+
+```sh
+cd web && python3 -m http.server 8000
+```
+
+Phone at `localhost:8000`, TV at `localhost:8000/tv.html`.
+
+Delete the `MOCK` map in `js/api.js` once `/api` is live.
+
+### Notes for the build
+
+- **Fluid TV.** The TV pages size everything in `cqw` against a
+  `container-type: size` root, so one page fills 1080p, 4K or a laptop window
+  with no breakpoints. Don't add fixed px to `.tv` descendants.
+- **The layout switch.** `tv.html` reads `/api/settings/display` and redirects
+  to the week or month page. The phone writes that setting.
+- **Refresh.** `poll()` in `js/ui.js` re-fetches every 60s and on tab focus.
+  Swap it for `/api/stream` (SSE) when that exists — one function to change.
+- **Overdue.** Server-computed only (SPEC.md §3) — `/api/day` tasks carry
+  `days_late` (int) and a ready-to-render `due_label` (e.g. "Due Aug 6 · 3
+  days late"). The frontend never recomputes this; it just reads the fields.
+- **Mock dates slide.** `shiftMockDates()` in `js/api.js` moves every date in the
+  fixture so the demo always lands on today — no editing JSON to see it work.
+  `fakeOverdue()` then re-derives `days_late`/`due_label` for the shifted
+  dates, standing in for the server. Delete both with the `MOCK` map.
+- **Never `toISOString()` for a calendar date.** It is UTC and lands on the wrong
+  day in the evening. Use `isoDate()` from `js/ui.js`.
+- **Testing one TV layout.** `?layout=week` (or `today`/`month`) overrides the
+  server setting, so you can open any Pi screen without changing settings.
+- **Photos** are `background-image` on the avatar, never `<img>`, so a missing
+  photo can't break a row. No photo → initial on a tint of their colour, same box.
+- **Icons.** None yet. The design system calls for Phosphor
+  (https://phosphoricons.com) — the chevrons and pluses here are text glyphs.
+
 ## Next
 
 `api/` is empty on purpose — build it against `SPEC.md`. Start with people +

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161826">
+<title>Edit person</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="sheet-scrim">
+  <form class="sheet" id="form">
+    <div class="grabber"></div>
+    <div class="sheet-head"><h2 id="heading">Add a person</h2><a class="muted" style="font-size:13px" href="family.html">Cancel</a></div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div id="preview"></div>
+      <div class="grow" style="display:flex;flex-direction:column;gap:8px">
+        <label class="btn btn-primary" style="min-height:40px">Change photo<input id="photo" type="file" accept="image/*" hidden></label>
+        <span class="muted" style="font-size:11.5px;line-height:1.45">Take one or pick from your library · stays on the server</span>
+      </div>
+    </div>
+    <label class="field"><span>Name</span><input class="input" name="name" id="name" placeholder="e.g. Jordan" required></label>
+    <div class="field"><span>Color</span>
+      <div id="colors" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px"></div>
+    </div>
+    <div class="field"><span>Uses a phone?</span>
+      <div class="row" id="phone"></div>
+    </div>
+    <p class="muted" style="font-size:11.5px;margin:0">Added to the family on the server — they'll show up when assigning tasks and get their own color everywhere.</p>
+    <div class="row">
+      <button class="btn btn-secondary" type="button" id="remove" hidden>Remove</button>
+      <button class="btn btn-primary" type="submit" style="flex:2">Save</button>
+    </div>
+  </form>
+</div>
+<script type="module">
+import { get, post, patch, send } from './js/api.js';
+import { el, avatar, $ } from './js/ui.js';
+
+const PALETTE = ['oklch(0.72 0.15 20)','oklch(0.74 0.15 55)','oklch(0.80 0.14 95)','oklch(0.75 0.15 140)',
+  'oklch(0.76 0.12 185)','oklch(0.70 0.14 235)','oklch(0.66 0.15 289)','oklch(0.70 0.15 330)',
+  'oklch(0.62 0.10 25)','oklch(0.60 0.08 150)','oklch(0.58 0.09 265)','oklch(0.72 0.02 280)'];
+
+const id = new URLSearchParams(location.search).get('id');
+const people = await get('/api/people');
+const existing = id ? people.find((p) => p.id === id) : null;
+const state = {
+  name: existing?.name || '',
+  color: existing?.color || PALETTE[3],
+  photo_url: existing?.photo_url || null,
+  has_phone: existing ? existing.has_phone : true,
+};
+
+if (existing) { $('#heading').textContent = 'Edit ' + existing.name; $('#remove').hidden = false; }
+$('#name').value = state.name;
+$('#name').oninput = (e) => { state.name = e.target.value; draw(); };
+
+$('#photo').onchange = (e) => {
+  const file = e.target.files[0];
+  if (file) { state.photo_url = URL.createObjectURL(file); state.file = file; draw(); }
+};
+
+function draw() {
+  $('#preview').replaceChildren(avatar(state, 76, 2));
+  $('#colors').replaceChildren(...PALETTE.map((c) => el('button', {
+    type: 'button', 'aria-label': 'Colour',
+    style: `aspect-ratio:1;border-radius:var(--r-md);display:grid;place-items:center;border:1px solid ${c === state.color ? c : 'var(--divider)'};` +
+      `background:${c === state.color ? `color-mix(in srgb,${c} 22%,transparent)` : 'var(--bg)'}`,
+    onclick: () => { state.color = c; draw(); },
+  }, el('div', { style: `width:18px;height:18px;border-radius:50%;background:${c}` }))));
+  $('#phone').replaceChildren(...[
+    { v: true, t: 'Yes', s: 'Can open the app and edit' },
+    { v: false, t: 'No', s: 'Assigned only — someone else checks off' },
+  ].map((o) => el('button', {
+    type: 'button', class: 'pill', 'aria-pressed': state.has_phone === o.v ? 'true' : 'false',
+    style: 'flex-direction:column;gap:2px;min-height:64px;align-items:flex-start;padding:10px 14px',
+    onclick: () => { state.has_phone = o.v; draw(); },
+  }, el('div', { style: 'font-size:14.5px' }, o.t), el('div', { class: 'muted', style: 'font-size:11px;line-height:1.35' }, o.s))));
+}
+draw();
+
+$('#form').onsubmit = async (e) => {
+  e.preventDefault();
+  const body = { name: state.name, color: state.color, has_phone: state.has_phone };
+  // Photo upload is multipart in the real API; see SPEC.md §6.
+  if (existing) await patch('/api/people/' + existing.id, body);
+  else await post('/api/people', body);
+  location.href = 'family.html';
+};
+$('#remove').onclick = async () => {
+  if (confirm(`Remove ${existing.name}? Their tasks stay but become unassigned.`)) {
+    await send('DELETE', '/api/people/' + existing.id);
+    location.href = 'family.html';
+  }
+};
+</script><script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+</script>
+</body>
+</html>

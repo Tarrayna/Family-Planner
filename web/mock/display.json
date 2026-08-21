@@ -1,0 +1,7 @@
+{
+  "layout": "today",
+  "show_weather": true,
+  "show_upcoming": true,
+  "time_format": "12h",
+  "phone_url": "https://planner.home/"
+}

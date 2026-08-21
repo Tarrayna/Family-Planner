@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161826">
+<title>Today</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="phone">
+  <div class="topbar">
+    <div><div class="kicker">Today</div><h1 id="date">—</h1></div>
+    <a class="btn btn-primary" style="min-height:36px;padding:6px 12px" href="month.html">Month</a>
+  </div>
+  <div id="vacation"></div>
+  <div class="section">
+    <div class="label">Schedule</div>
+    <div id="events" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:baseline;justify-content:space-between">
+      <div class="label">Due today</div><div id="late" class="muted" style="font-size:11px"></div>
+    </div>
+    <div id="tasks"></div>
+  </div>
+  <div style="height:96px"></div>
+</main>
+<a class="fab" href="task.html" aria-label="Add">+</a>
+<script type="module">
+import { get, post } from './js/api.js';
+import { el, avatar, byId, fmtTime, poll, $, MONTH, DOW, isoDate } from './js/ui.js';
+
+const people = byId(await get('/api/people'));
+
+async function render() {
+  const day = await get('/api/day?date=' + isoDate());
+  const d = new Date(day.date + 'T00:00:00');
+  $('#date').textContent = `${DOW[d.getDay()]}, ${MONTH[d.getMonth()].slice(0, 3)} ${d.getDate()}`;
+
+  const evs = $('#events'); evs.replaceChildren();
+  for (const e of day.events) {
+    const who = people[e.assignee_id];
+    evs.append(el('div', { class: 'ev' },
+      who && avatar(who, 26),
+      el('div', { class: 'time' }, fmtTime(e.starts_at)),
+      el('div', { class: 'grow', style: 'min-width:0' },
+        el('div', { class: 'title' }, e.title),
+        e.sub && el('div', { class: 'sub' }, e.sub))));
+  }
+
+  const box = $('#tasks'); box.replaceChildren();
+  const sorted = [...day.tasks].sort((a, b) => (b.days_late || 0) - (a.days_late || 0));
+  $('#late').textContent = sorted.filter((t) => t.days_late > 0).length + ' late';
+  for (const t of sorted) {
+    const who = people[t.assignee_id];
+    const done = !!t.completed_at;
+    const check = el('div', { class: 'check', 'aria-checked': done ? 'true' : 'false', role: 'checkbox' }, done ? '✓' : '');
+    box.append(el('button', {
+      class: 'task' + (t.days_late ? ' late' : ''), 'data-done': done ? '1' : '0',
+      onclick: async (e) => {
+        const row = e.currentTarget, now = row.dataset.done !== '1';
+        row.dataset.done = now ? '1' : '0';
+        check.setAttribute('aria-checked', String(now));
+        check.textContent = now ? '✓' : '';
+        await post(`/api/tasks/${t.id}/complete`, { done: now });
+      },
+    },
+      check,
+      el('div', { class: 'grow', style: 'min-width:0' },
+        el('div', { class: 'title' }, t.title),
+        el('div', { class: 'meta' }, t.due_label)),
+      who && avatar(who, 24)));
+  }
+
+  const vac = $('#vacation'); vac.replaceChildren();
+  if (day.vacation) {
+    vac.append(el('div', { class: 'section' },
+      el('a', { class: 'listrow', href: '/vacation.html', style: 'background:var(--a900);box-shadow:inset 0 0 0 1px var(--accent)' },
+        el('div', { class: 'grow', style: 'font-size:12.5px;color:var(--a100)' },
+          `${day.vacation.name} — chores paused until ${day.vacation.ends_on}`),
+        el('div', { class: 'chev' }, '›'))));
+  }
+}
+poll(render);
+</script><script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+</script>
+</body>
+</html>

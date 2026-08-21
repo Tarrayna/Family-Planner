@@ -1,0 +1,158 @@
+{
+  "from": "2026-08-01",
+  "to": "2026-08-31",
+  "events": [
+    {
+      "id": "319:00p2",
+      "title": "Book club",
+      "starts_at": "2026-08-03T19:00:00",
+      "assignee_id": "p2",
+      "google": false
+    },
+    {
+      "id": "516:00p3",
+      "title": "Piano lesson",
+      "starts_at": "2026-08-05T16:00:00",
+      "assignee_id": "p3",
+      "google": false
+    },
+    {
+      "id": "909:00p1",
+      "title": "Farmers market",
+      "starts_at": "2026-08-09T09:00:00",
+      "assignee_id": "p1",
+      "google": true
+    },
+    {
+      "id": "911:30p3",
+      "title": "Swim practice",
+      "starts_at": "2026-08-09T11:30:00",
+      "assignee_id": "p3",
+      "google": true
+    },
+    {
+      "id": "918:00p2",
+      "title": "Grandma's",
+      "starts_at": "2026-08-09T18:00:00",
+      "assignee_id": "p2",
+      "google": true
+    },
+    {
+      "id": "1015:30p3",
+      "title": "Dentist",
+      "starts_at": "2026-08-10T15:30:00",
+      "assignee_id": "p3",
+      "google": true
+    },
+    {
+      "id": "1107:00p1",
+      "title": "Trash pickup",
+      "starts_at": "2026-08-11T07:00:00",
+      "assignee_id": "p1",
+      "google": false
+    },
+    {
+      "id": "1117:30p1",
+      "title": "Oil change",
+      "starts_at": "2026-08-11T17:30:00",
+      "assignee_id": "p1",
+      "google": false
+    },
+    {
+      "id": "1219:00p2",
+      "title": "Movie night",
+      "starts_at": "2026-08-12T19:00:00",
+      "assignee_id": "p2",
+      "google": false
+    },
+    {
+      "id": "1418:30p2",
+      "title": "Pizza night",
+      "starts_at": "2026-08-14T18:30:00",
+      "assignee_id": "p2",
+      "google": false
+    },
+    {
+      "id": "1510:00p3",
+      "title": "Soccer game",
+      "starts_at": "2026-08-15T10:00:00",
+      "assignee_id": "p3",
+      "google": false
+    },
+    {
+      "id": "1514:00p1",
+      "title": "Yard work",
+      "starts_at": "2026-08-15T14:00:00",
+      "assignee_id": "p1",
+      "google": false
+    },
+    {
+      "id": "1818:00p2",
+      "title": "PTA meeting",
+      "starts_at": "2026-08-18T18:00:00",
+      "assignee_id": "p2",
+      "google": false
+    },
+    {
+      "id": "1811:30p3",
+      "title": "Swim practice",
+      "starts_at": "2026-08-18T11:30:00",
+      "assignee_id": "p3",
+      "google": false
+    },
+    {
+      "id": "2118:30p3",
+      "title": "Piano recital",
+      "starts_at": "2026-08-21T18:30:00",
+      "assignee_id": "p3",
+      "google": false
+    },
+    {
+      "id": "2419:00p2",
+      "title": "Book club",
+      "starts_at": "2026-08-24T19:00:00",
+      "assignee_id": "p2",
+      "google": false
+    },
+    {
+      "id": "2808:00p1",
+      "title": "Camping trip",
+      "starts_at": "2026-08-28T08:00:00",
+      "assignee_id": "p1",
+      "google": false
+    },
+    {
+      "id": "2908:00p1",
+      "title": "Camping trip",
+      "starts_at": "2026-08-29T08:00:00",
+      "assignee_id": "p1",
+      "google": false
+    }
+  ],
+  "tasks": [
+    {
+      "id": "r1",
+      "title": "Take out recycling",
+      "due_date": "2026-08-09",
+      "assignee_id": "p1"
+    },
+    {
+      "id": "r2",
+      "title": "Pack swim bag",
+      "due_date": "2026-08-10",
+      "assignee_id": "p3"
+    },
+    {
+      "id": "r3",
+      "title": "Water the garden",
+      "due_date": "2026-08-12",
+      "assignee_id": "p2"
+    },
+    {
+      "id": "r4",
+      "title": "Feed the fish",
+      "due_date": "2026-08-13",
+      "assignee_id": "p3"
+    }
+  ]
+}

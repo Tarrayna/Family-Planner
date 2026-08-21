@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161826">
+<title>New task</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="sheet-scrim">
+  <form class="sheet" id="form">
+    <div class="grabber"></div>
+    <div class="sheet-head"><h2 id="heading">New task</h2><a href="today.html" class="muted" style="font-size:13px">Cancel</a></div>
+    <label class="field"><span>Task</span><input class="input" name="title" placeholder="e.g. Pack swim bag" required></label>
+    <div class="field"><span>Assign to</span><div class="pillrow" id="people"></div></div>
+    <div class="row">
+      <label class="field"><span>Date</span><input class="input" type="date" name="due_date"></label>
+      <label class="field"><span>Time</span>
+        <select class="input" name="due_time_hint">
+          <option value="none">Any time</option><option value="morning">Morning</option>
+          <option value="afternoon">Afternoon</option><option value="evening">Evening</option>
+        </select>
+      </label>
+    </div>
+    <div class="field"><span>Repeats</span>
+      <a class="listrow" id="repeat" href="repeat.html">
+        <div class="grow">
+          <div style="font-size:14.5px" id="rule">Does not repeat</div>
+          <div class="muted" style="font-size:11.5px" id="ends">One time only</div>
+        </div><div class="chev">›</div>
+      </a>
+    </div>
+    <button class="btn btn-primary btn-block" type="submit">Add task</button>
+  </form>
+</div>
+<script type="module">
+import { get, post, whoami } from './js/api.js';
+import { el, avatar, $ } from './js/ui.js';
+
+const people = await get('/api/people');
+let assignee = whoami() || people[0].id;
+const row = $('#people');
+
+function drawPeople() {
+  row.replaceChildren(...people.map((p) => el('button', {
+    type: 'button', class: 'pill', 'aria-pressed': p.id === assignee ? 'true' : 'false',
+    style: p.id === assignee ? `border-color:${p.color};background:color-mix(in srgb,${p.color} 18%,transparent);color:var(--text)` : '',
+    onclick: () => { assignee = p.id; drawPeople(); },
+  }, avatar(p, 22, 1.5), p.name)));
+}
+drawPeople();
+
+// The repeat sheet hands its rule back through sessionStorage.
+const saved = JSON.parse(sessionStorage.getItem('planner.rule') || 'null');
+if (saved) { $('#rule').textContent = saved.summary; $('#ends').textContent = saved.ends_label; }
+
+$('#form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(e.target));
+  await post('/api/tasks', { ...d, assignee_id: assignee, ...(saved ? { rrule: saved.rrule, rrule_until: saved.until, rrule_count: saved.count } : {}) });
+  sessionStorage.removeItem('planner.rule');
+  location.href = 'today.html';
+});
+</script><script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+</script>
+</body>
+</html>

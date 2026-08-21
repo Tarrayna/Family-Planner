@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Family Planner — Month</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+<style>html,body{overflow:hidden;cursor:none}</style>
+</head>
+<body>
+<main class="tv" id="root"></main>
+<script type="module">
+import { get } from './js/api.js';
+import { el, avatarCq, byId, poll, $, DOW, MONTH, isoDate } from './js/ui.js';
+import { clock, weather, legend, rail } from './js/tv.js';
+
+const people = byId(await get('/api/people'));
+const cfg = await get('/api/settings/display');
+// ?layout=week overrides the server setting — handy for testing one screen.
+const forced = new URLSearchParams(location.search).get('layout');
+if (forced) cfg.layout = forced;
+if (cfg.layout === 'today') location.replace('tv.html');
+if (cfg.layout === 'week') location.replace('tv-week.html');
+
+async function render() {
+  const today = new Date();
+  const y = today.getFullYear(), m = today.getMonth();
+  const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate();
+  const pad = (n) => String(n).padStart(2, '0');
+  const iso = (d) => `${y}-${pad(m + 1)}-${pad(d)}`;
+
+  const [day, range] = await Promise.all([
+    get('/api/day?date=' + isoDate(today)),
+    get(`/api/range?from=${iso(1)}&to=${iso(days)}`),
+  ]);
+
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const n = i - first.getDay() + 1;
+    const inMonth = n >= 1 && n <= days;
+    const cell = el('div', { class: 'tv-cell' + (!inMonth ? ' out' : '') + (n === today.getDate() ? ' today' : '') });
+    if (inMonth) {
+      const evs = range.events.filter((e) => e.starts_at.slice(0, 10) === iso(n));
+      cell.append(el('div', { class: 'n' }, String(n)));
+      const shown = evs.length > 2 ? evs.slice(0, 1) : evs.slice(0, 2);
+      for (const e of shown) {
+        cell.append(el('div', { class: 'e' }, avatarCq(people[e.assignee_id], 1.35, 0.1), el('span', {}, e.title)));
+      }
+      if (evs.length > shown.length) cell.append(el('div', { class: 'more' }, `+${evs.length - shown.length} more`));
+    }
+    cells.push(cell);
+  }
+
+  $('#root').replaceChildren(
+    el('div', { class: 'tv-head', style: 'align-items:flex-end' },
+      el('div', { style: 'display:flex;align-items:flex-end;gap:2.5cqw;min-width:0' },
+        el('div', { class: 'tv-date sm' }, `${MONTH[m]} ${y}`),
+        legend(Object.values(people))),
+      el('div', { class: 'tv-right', style: 'align-items:center' },
+        cfg.show_weather && weather(day.weather), clock(cfg.time_format === '24h', true))),
+    el('div', { class: 'tv-body' },
+      el('div', { style: 'flex:1;display:flex;flex-direction:column;gap:.5cqw;min-width:0' },
+        el('div', { class: 'tv-dowrow' }, ...DOW.map((d) => el('div', {}, d))),
+        el('div', { class: 'tv-grid' }, ...cells)),
+      rail(day, people, cfg.phone_url)));
+}
+poll(render);
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#161826">
+<title>Google calendars</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="phone">
+  <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><a class="back" href="settings.html">‹</a><h1 id="title">Calendars</h1></div></div>
+  <div class="section">
+    <div class="listrow">
+      <div class="gmark" style="width:30px;height:30px;font-size:14px">G</div>
+      <div class="grow" style="min-width:0">
+        <div style="font-size:14px" id="account">—</div>
+        <div class="muted" style="font-size:11.5px">Connected · synced 4 min ago</div>
+      </div>
+      <button class="muted" style="font-size:12.5px">Sign out</button>
+    </div>
+  </div>
+  <div class="section">
+    <div class="label">Show on the planner</div>
+    <div id="list" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+  <div class="section">
+    <div class="label">Auto-assign</div>
+    <div id="auto"></div>
+  </div>
+  <p class="muted" style="font-size:11.5px;padding:12px 20px;line-height:1.55">Events from a person's own calendars land on them. Shared calendars stay unassigned. Reassigning in the planner never writes back to Google.</p>
+</main>
+<script type="module">
+import { get, patch, whoami } from './js/api.js';
+import { el, avatar, byId, $ } from './js/ui.js';
+
+const people = byId(await get('/api/people'));
+const me = people[whoami()] || Object.values(people)[0];
+const cals = (await get('/api/calendars')).filter((c) => !c.owner_person_id || c.owner_person_id === me.id);
+
+$('#title').textContent = me.name + "'s calendars";
+$('#account').textContent = me.name.toLowerCase() + '@gmail.com';
+
+function draw() {
+  $('#list').replaceChildren(...cals.map((c) => el('button', { class: 'listrow',
+    onclick: async () => { c.enabled = !c.enabled; draw(); await patch('/api/calendars/' + c.id, { enabled: c.enabled }); } },
+    el('div', { style: `width:10px;height:10px;flex:none;border-radius:3px;background:${c.auto_assign ? me.color : 'var(--n500)'}` }),
+    el('div', { class: 'grow', style: 'min-width:0' },
+      el('div', { style: 'font-size:14.5px' + (c.enabled ? '' : ';color:var(--n500)') }, c.name),
+      el('div', { class: 'muted', style: 'font-size:11.5px' }, c.sub || '')),
+    el('div', { class: 'switch', role: 'switch', 'aria-checked': c.enabled ? 'true' : 'false' }, el('i', {})))));
+
+  const own = cals.find((c) => c.auto_assign) || cals[0];
+  $('#auto').replaceChildren(el('button', { class: 'listrow', style: 'min-height:60px',
+    onclick: async () => { own.auto_assign = !own.auto_assign; draw(); await patch('/api/calendars/' + own.id, { auto_assign: own.auto_assign }); } },
+    avatar(me, 28),
+    el('div', { class: 'grow' },
+      el('div', { style: 'font-size:14.5px' }, 'Events land on ' + me.name),
+      el('div', { class: 'muted', style: 'font-size:11.5px;line-height:1.4' }, 'From their own calendars only')),
+    el('div', { class: 'switch', role: 'switch', 'aria-checked': own.auto_assign ? 'true' : 'false' }, el('i', {}))));
+}
+draw();
+</script><script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+</script>
+</body>
+</html>
