@@ -94,6 +94,8 @@ class FakeDB:
         self.inserted_dates = []
 
     async def fetch(self, query, *args):
+        if "FROM vacation" in query:
+            return []  # no vacations pausing generation in these tests
         return [{"due_date": d} for d in self._existing_dates]
 
     async def execute(self, query, *args):

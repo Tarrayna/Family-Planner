@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, field_validator
 
-from app import recurrence, stream
+from app import recurrence, stream, vacations
 
 router = APIRouter()
 
@@ -28,6 +28,11 @@ async def materialize_series(db, master: dict, today: dt.date) -> None:
     occurrences = recurrence.expand_occurrences(
         master["rrule"], master["due_date"], window_start, window_end
     )
+    # SPEC.md §3: no instances generated for dates inside a pause_repeating
+    # vacation; generation resumes on return since we just skip those dates
+    # here rather than tracking a "paused" state anywhere.
+    paused = await vacations.pause_repeating_windows(db, window_start, window_end)
+    occurrences = [d for d in occurrences if not vacations.date_in_any_window(d, paused)]
     existing = await db.fetch(
         "SELECT due_date FROM task WHERE id = $1 OR series_id = $1", master["id"]
     )
@@ -80,10 +85,10 @@ def _due_label(due_date: Optional[dt.date], days_late: int) -> str:
     return "Due today"
 
 
-def _to_task(row, today: dt.date) -> dict:
+def _to_task(row, today: dt.date, pause_windows=()) -> dict:
     due_date = row["due_date"]
     completed = row["completed_at"] is not None
-    days_late = max(0, (today - due_date).days) if due_date and not completed else 0
+    days_late = vacations.days_late(due_date, today, pause_windows) if not completed else 0
     return {
         "id": str(row["id"]),
         "title": row["title"],
@@ -98,18 +103,24 @@ def _to_task(row, today: dt.date) -> dict:
 
 @router.get("/api/day")
 async def day(date: dt.date, request: Request):
-    rows = await request.app.state.db.fetch(
+    db = request.app.state.db
+    rows = await db.fetch(
         f"SELECT {TASK_COLUMNS} FROM task "
         "WHERE due_date = $1 OR (due_date < $1 AND completed_at IS NULL) "
         "ORDER BY due_date",
         date,
     )
+    vacation = await vacations.active_vacation(db, date)
+    pause_windows = await vacations.pause_overdue_windows(db, date - dt.timedelta(days=WINDOW_PAST_DAYS), date)
     return {
         "date": date.isoformat(),
         "weather": None,
-        "vacation": None,
+        "vacation": vacation,
         "events": [],
-        "tasks": [_to_task(r, date) for r in rows],
+        # hide_tasks_on_tv is TV-only rendering (js/tv.js's rail() shows the
+        # trip countdown instead) — the phone's Today view always lists
+        # tasks, vacation or not, so this list is never suppressed here.
+        "tasks": [_to_task(r, date, pause_windows) for r in rows],
         "upcoming": [],
     }
 

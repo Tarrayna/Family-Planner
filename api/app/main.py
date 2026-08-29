@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app import db, people, settings, stream, tasks
+from app import db, people, settings, stream, tasks, vacations
 
 RECURRENCE_JOB_INTERVAL = dt.timedelta(hours=24)
 
@@ -37,6 +37,7 @@ app.include_router(people.router)
 app.include_router(settings.router)
 app.include_router(stream.router)
 app.include_router(tasks.router)
+app.include_router(vacations.router)
 
 
 @app.get("/api/health")

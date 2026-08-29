@@ -60,11 +60,10 @@ drawToggles();
 
 const box = $('#checklist');
 if (!v.checklist.length) {
-  box.append(el('button', { class: 'listrow', style: 'min-height:56px;background:var(--a900);box-shadow:inset 0 0 0 1px var(--accent)' },
+  box.append(el('div', { class: 'listrow', style: 'min-height:56px;background:var(--a900);box-shadow:inset 0 0 0 1px var(--accent)' },
     el('div', { class: 'grow' },
-      el('div', { style: 'font-size:14.5px;color:var(--a100)' }, 'Generate from past trips'),
-      el('div', { class: 'muted', style: 'font-size:11.5px' }, 'Starts 3 days before you leave')),
-    el('div', { class: 'chev' }, '›')));
+      el('div', { style: 'font-size:14.5px;color:var(--a100)' }, 'Default checklist'),
+      el('div', { class: 'muted', style: 'font-size:11.5px' }, 'Added when you save, due 3 days before you leave — edit or check off anytime'))));
 } else {
   for (const g of v.checklist) {
     const items = el('div', { style: 'display:flex;flex-direction:column;gap:4px' });
