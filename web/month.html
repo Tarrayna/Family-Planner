@@ -28,17 +28,26 @@
 </main>
 <script type="module">
 import { get } from './js/api.js';
-import { el, avatar, byId, fmtTime, $, MONTH, DOW, WEEKDAY } from './js/ui.js';
+import { el, avatar, byId, fmtTime, isoDate, $, MONTH, DOW, WEEKDAY } from './js/ui.js';
 
 const people = byId(await get('/api/people'));
-const data = await get('/api/range?from=2026-08-01&to=2026-08-31');
-let cursor = new Date('2026-08-01T00:00:00');
-let selected = '2026-08-09';
+const today = new Date();
+let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
+let selected = isoDate(today);
+let data;
 
 $('#legend').replaceChildren(...Object.values(people).map((p) =>
   el('div', {}, avatar(p, 20), p.name)));
 
 function eventsOn(iso) { return data.events.filter((e) => e.starts_at.slice(0, 10) === iso); }
+
+async function load() {
+  const y = cursor.getFullYear(), m = cursor.getMonth();
+  const pad = (n) => String(n).padStart(2, '0');
+  const days = new Date(y, m + 1, 0).getDate();
+  data = await get(`/api/range?from=${y}-${pad(m + 1)}-01&to=${y}-${pad(m + 1)}-${pad(days)}`);
+  draw();
+}
 
 function draw() {
   $('#title').textContent = `${MONTH[cursor.getMonth()]} ${cursor.getFullYear()}`;
@@ -85,9 +94,9 @@ function draw() {
       el('div', { class: 'grow', style: 'font-size:14px;min-width:0' }, e.title)));
   }
 }
-$('#prev').onclick = () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1); draw(); };
-$('#next').onclick = () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1); draw(); };
-draw();
+$('#prev').onclick = () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1); load(); };
+$('#next').onclick = () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1); load(); };
+load();
 </script><script>
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 </script>

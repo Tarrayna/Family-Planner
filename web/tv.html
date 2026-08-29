@@ -14,19 +14,13 @@
 <script type="module">
 import { get } from './js/api.js';
 import { el, avatarCq, byId, fmtTime, poll, $, DOW, WEEKDAY, MONTH, isoDate } from './js/ui.js';
-import { clock, weather, rail } from './js/tv.js';
+import { clock, weather, rail, checkLayout } from './js/tv.js';
 
 let people = byId(await get('/api/people'));
-const cfg = await get('/api/settings/display');
-// ?layout=week overrides the server setting — handy for testing one screen.
-const forced = new URLSearchParams(location.search).get('layout');
-if (forced) cfg.layout = forced;
+let cfg = await get('/api/settings/display');
+checkLayout(cfg, 'tv.html');
 
-// The Pi shows whichever layout the phone chose.
-if (cfg.layout === 'week') location.replace('tv-week.html');
-if (cfg.layout === 'month') location.replace('tv-month.html');
-
-const use24 = cfg.time_format === '24h';
+let use24 = cfg.time_format === '24h';
 
 const dayLabel = (u) => {
   if (!u.date) return u.day;
@@ -36,6 +30,9 @@ const dayLabel = (u) => {
 
 async function render() {
   people = byId(await get('/api/people'));
+  cfg = await get('/api/settings/display');
+  checkLayout(cfg, 'tv.html');
+  use24 = cfg.time_format === '24h';
   const day = await get('/api/day?date=' + isoDate());
   const d = new Date(day.date + 'T00:00:00');
 

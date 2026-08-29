@@ -14,21 +14,20 @@
 <script type="module">
 import { get } from './js/api.js';
 import { el, avatarCq, byId, fmtTime, poll, $, DOW, MONTH, isoDate } from './js/ui.js';
-import { clock, weather, legend, rail } from './js/tv.js';
+import { clock, weather, legend, rail, checkLayout } from './js/tv.js';
 
 let people = byId(await get('/api/people'));
-const cfg = await get('/api/settings/display');
-// ?layout=week overrides the server setting — handy for testing one screen.
-const forced = new URLSearchParams(location.search).get('layout');
-if (forced) cfg.layout = forced;
-if (cfg.layout === 'today') location.replace('tv.html');
-if (cfg.layout === 'month') location.replace('tv-month.html');
-const use24 = cfg.time_format === '24h';
+let cfg = await get('/api/settings/display');
+checkLayout(cfg, 'tv-week.html');
+let use24 = cfg.time_format === '24h';
 
 function weekStart(d) { const x = new Date(d); x.setDate(x.getDate() - x.getDay()); return x; }
 
 async function render() {
   people = byId(await get('/api/people'));
+  cfg = await get('/api/settings/display');
+  checkLayout(cfg, 'tv-week.html');
+  use24 = cfg.time_format === '24h';
   const today = new Date();
   const start = weekStart(today);
   const iso = isoDate;

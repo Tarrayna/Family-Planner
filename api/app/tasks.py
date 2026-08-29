@@ -2,7 +2,7 @@ import datetime as dt
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, field_validator
 
 from app import recurrence, stream
@@ -111,6 +111,26 @@ async def day(date: dt.date, request: Request):
         "events": [],
         "tasks": [_to_task(r, date) for r in rows],
         "upcoming": [],
+    }
+
+
+@router.get("/api/range")
+async def range_(
+    request: Request, date_from: dt.date = Query(alias="from"), date_to: dt.date = Query(alias="to")
+):
+    rows = await request.app.state.db.fetch(
+        f"SELECT {TASK_COLUMNS} FROM task WHERE due_date BETWEEN $1 AND $2 ORDER BY due_date",
+        date_from,
+        date_to,
+    )
+    today = dt.date.today()
+    return {
+        "from": date_from.isoformat(),
+        "to": date_to.isoformat(),
+        # No event system yet (that's Google sync, deliberately deferred) —
+        # week/month grids render fine with an empty events list until then.
+        "events": [],
+        "tasks": [_to_task(r, today) for r in rows],
     }
 
 

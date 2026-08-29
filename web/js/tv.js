@@ -32,6 +32,18 @@ export function weather(w, big) {
       big && el('div', { class: 'tv-cond' }, `${w.condition} · H ${w.high}° L ${w.low}°`)));
 }
 
+const LAYOUT_PAGE = { today: 'tv.html', week: 'tv-week.html', month: 'tv-month.html' };
+
+// Redirects to whichever layout page cfg (or a ?layout= override, for
+// testing one screen) names, if that's not the page we're already on.
+// Called on load and on every render() tick so a layout change from
+// Settings takes effect without restarting the kiosk browser.
+export function checkLayout(cfg, here) {
+  const forced = new URLSearchParams(location.search).get('layout');
+  const target = LAYOUT_PAGE[forced || cfg.layout];
+  if (target && target !== here) location.replace(target);
+}
+
 export function legend(people) {
   return el('div', { class: 'tv-legend' },
     ...people.map((p) => el('div', {}, avatarCq(p, 1.9, 0.14), p.name)));
