@@ -1,18 +1,21 @@
-import os
 from contextlib import asynccontextmanager
 
-import asyncpg
 from fastapi import FastAPI
+
+from app import db, people, stream, tasks
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.db = await asyncpg.create_pool(os.environ["DATABASE_URL"])
+    app.state.db = await db.create_pool()
     yield
     await app.state.db.close()
 
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(people.router)
+app.include_router(stream.router)
+app.include_router(tasks.router)
 
 
 @app.get("/api/health")

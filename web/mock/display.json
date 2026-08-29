@@ -3,5 +3,5 @@
   "show_weather": true,
   "show_upcoming": true,
   "time_format": "12h",
-  "phone_url": "https://192.168.1.125/"
+  "phone_url": "https://192.168.1.126/"
 }

@@ -16,10 +16,10 @@
 #  required too: browsers send no SNI for a literal IP, so without it Caddy
 #  can't pick which cert to present and the handshake fails.
 {
-	default_sni 192.168.1.125
+	default_sni 192.168.1.126
 }
 
-planner.home, 192.168.1.125 {
+planner.home, 192.168.1.126 {
 	tls internal
 
 	handle /api/* {

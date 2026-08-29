@@ -71,9 +71,11 @@ export const WEEKDAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 
 export const MONTH = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
 
-// Every 60 seconds, as chosen. Swap for /api/stream when it exists.
+// Re-renders on /api/stream (SSE) for near-instant updates; the interval and
+// visibility listener stay as a fallback so a dropped stream still recovers.
 export function poll(fn, ms = 60000) {
   fn();
   setInterval(fn, ms);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) fn(); });
+  if ('EventSource' in window) new EventSource('/api/stream').onmessage = () => fn();
 }

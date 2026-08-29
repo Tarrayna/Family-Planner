@@ -16,7 +16,7 @@ import { get } from './js/api.js';
 import { el, avatarCq, byId, fmtTime, poll, $, DOW, WEEKDAY, MONTH, isoDate } from './js/ui.js';
 import { clock, weather, rail } from './js/tv.js';
 
-const people = byId(await get('/api/people'));
+let people = byId(await get('/api/people'));
 const cfg = await get('/api/settings/display');
 // ?layout=week overrides the server setting — handy for testing one screen.
 const forced = new URLSearchParams(location.search).get('layout');
@@ -35,6 +35,7 @@ const dayLabel = (u) => {
 };
 
 async function render() {
+  people = byId(await get('/api/people'));
   const day = await get('/api/day?date=' + isoDate());
   const d = new Date(day.date + 'T00:00:00');
 

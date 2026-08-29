@@ -16,7 +16,7 @@ import { get } from './js/api.js';
 import { el, avatarCq, byId, poll, $, DOW, MONTH, isoDate } from './js/ui.js';
 import { clock, weather, legend, rail } from './js/tv.js';
 
-const people = byId(await get('/api/people'));
+let people = byId(await get('/api/people'));
 const cfg = await get('/api/settings/display');
 // ?layout=week overrides the server setting — handy for testing one screen.
 const forced = new URLSearchParams(location.search).get('layout');
@@ -25,6 +25,7 @@ if (cfg.layout === 'today') location.replace('tv.html');
 if (cfg.layout === 'week') location.replace('tv-week.html');
 
 async function render() {
+  people = byId(await get('/api/people'));
   const today = new Date();
   const y = today.getFullYear(), m = today.getMonth();
   const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate();
