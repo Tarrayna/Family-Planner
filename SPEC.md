@@ -9,15 +9,20 @@ Self-hosted family planner. LAN-only. Three Docker containers.
 - **api** — application server. Owns all data, recurrence expansion, Google sync.
 - **db** — Postgres.
 
-The Pi runs a kiosk browser at `/tv`. Phones open `/` (the PWA). Same build, the
-route picks the shell.
+The Pi runs a kiosk browser at `/tv.html`. Phones open `/` (the PWA). Same
+build, the route picks the shell. (Every page is addressed with its `.html`
+suffix — Caddy's SPA fallback only knows the literal filename, so an
+extensionless `/tv` actually resolves to `index.html`'s phone-identity
+redirect, not the TV view. Point the kiosk at `/tv.html` specifically.)
 
 ## 2. Data model
 
 ### person
-`id`, `name`, `color` (free-choice hex/oklch — not limited to the app palette),
-`photo_path` (nullable), `has_phone` (bool; false = assigned-only, someone else
-checks their tasks off), `created_at`.
+`id`, `name`, `color` (stored free-choice hex/oklch, no server-side
+palette validation — but the current phone UI only offers a fixed 12-swatch
+OKLCH palette by design, not a free color picker), `photo_path` (nullable),
+`has_phone` (bool; false = assigned-only, someone else checks their tasks
+off), `created_at`.
 
 Anyone can edit anyone. No roles, no permissions.
 
@@ -25,7 +30,11 @@ Anyone can edit anyone. No roles, no permissions.
 `id`, `title`, `assignee_id` (nullable), `due_date` (nullable),
 `due_time_hint` (morning|afternoon|evening|none), `rrule` (nullable),
 `rrule_until` (nullable), `rrule_count` (nullable), `series_id` (nullable),
-`completed_at` (nullable), `created_at`.
+`completed_at` (nullable), `created_at`, `vacation_id` (nullable, see
+vacation section below), `checklist_group` (nullable — the vacation
+checklist's "group"; named `checklist_group` in the DB since `group` is a
+reserved SQL word), `note` (nullable — used by checklist items, e.g. "USPS
+— do 2 days ahead").
 
 Recurrence is an RFC 5545 RRULE string:
 
@@ -53,9 +62,12 @@ Shared calendars get `auto_assign = false` so their events stay unassigned.
 
 ### vacation
 `id`, `name`, `starts_on`, `ends_on`, `pause_repeating`, `pause_overdue`,
-`hide_tasks_on_tv`, `keep_calendar_events`.
+`hide_tasks_on_tv`, `keep_calendar_events`, `created_at`.
 
-Pre-trip checklist items are ordinary tasks with a `vacation_id` and a `group`.
+Pre-trip checklist items are ordinary tasks with a `vacation_id` and a
+`checklist_group`. New trips get a fixed editable template
+(House/Kids/Travel) copied in as real tasks, due 3 days before `starts_on`
+— resolved 2026-08-29, see §8 history below.
 
 ## 3. Rules the server owns
 
@@ -107,10 +119,10 @@ adding real auth.
 | `POST /api/tasks` · `PATCH /api/tasks/:id` | Create/edit, including RRULE fields |
 | `POST /api/tasks/:id/complete` | Check off (and un-check) |
 | `POST /api/events` · `PATCH /api/events/:id` | Create in planner; reassign (sets lock) |
-| `GET/POST/PATCH /api/people` | Name, color, photo, has_phone |
+| `GET/POST/PATCH/DELETE /api/people` | Name, color, photo, has_phone |
 | `GET /api/calendars` · `PATCH /api/calendars/:id` | Per-person list, enable / auto-assign |
 | `GET/POST /api/vacations` | Setup, toggles, generated checklist |
-| `GET /api/settings/display` | Which layout the TV shows; written from the phone |
+| `GET/PATCH /api/settings/display` | Which layout the TV shows; written from the phone |
 | `GET /api/stream` | Server-sent events — TV re-renders on any change |
 
 The TV caches the last good `/api/day` and shows it behind a "Showing
@@ -118,21 +130,33 @@ yesterday's plan" banner when the API is unreachable.
 
 ## 7. Build order
 
-1. Containers, Postgres, Caddy with a working cert — prove the PWA installs on
-   both phones before anything else.
+1. Containers, Postgres, Caddy with a working cert. **PWA installability was
+   never actually achieved** — Chrome/Brave showed no install option on
+   either phone despite every server-side installability check passing;
+   confirmed environment-level (not an app bug) by testing a known-good
+   third-party PWA (reddit.com), which failed identically. Closed, worked
+   around with a link from an existing dashboard instead of home-screen
+   install.
 2. People + identity cookie.
 3. Tasks with plain due dates; TV Today reading `/api/day`.
 4. Recurrence. Largest single piece — use a library, write tests for
    "2nd Wednesday" and "every 3 weeks until".
-5. Google OAuth and sync, one account first.
-6. Vacations and the pre-trip checklist.
-7. Week and month views, then the display-settings switch.
+5. Google OAuth and sync, one account first. **Built last, deliberately** —
+   reordered below steps 6 and 7 so the rest of the app works before
+   taking on Google's complexity.
+6. Vacations and the pre-trip checklist. *(built before step 5, see above)*
+7. Week and month views, then the display-settings switch. *(also built
+   before step 5)*
 
 ## 8. Open questions
 
 - How does a person without a phone check off their own tasks? Shared tablet,
   a parent doing it, or a touchscreen on the Pi.
 - Weather source — needs an outbound call and an API key.
-- Should the pre-trip checklist learn from past trips, or start from a fixed
-  editable template?
-- Backups: nightly `pg_dump` to somewhere off the Pi, from day one.
+- Backups: nightly `pg_dump` to somewhere off the Pi, from day one. **Not yet
+  implemented** — flag again once the db has real data worth losing.
+
+### Resolved
+
+- **Pre-trip checklist source** (2026-08-29): fixed editable template, not
+  "learn from past trips" — see the vacation section in §2.
