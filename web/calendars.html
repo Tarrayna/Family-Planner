@@ -35,7 +35,7 @@
 </main>
 <script type="module">
 import { get, patch, whoami } from './js/api.js';
-import { el, avatar, byId, $ } from './js/ui.js';
+import { el, avatar, byId, $, tabbar } from './js/ui.js';
 
 const people = byId(await get('/api/people'));
 const me = people[whoami()] || Object.values(people)[0];
@@ -63,6 +63,7 @@ function draw() {
     el('div', { class: 'switch', role: 'switch', 'aria-checked': own.auto_assign ? 'true' : 'false' }, el('i', {}))));
 }
 draw();
+tabbar();
 </script><script>
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 </script>

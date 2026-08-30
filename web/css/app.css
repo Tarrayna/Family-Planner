@@ -21,7 +21,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .phone{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
 .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:calc(20px + env(safe-area-inset-top)) 20px 14px}
 .topbar .kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
-.topbar h1{font-size:26px;margin-top:2px}
+.topbar h1{font-size:26px;margin-top:2px;white-space:nowrap}
 .back{width:34px;height:34px;flex:none;border:1px solid var(--divider);border-radius:var(--r-md);display:grid;place-items:center;color:var(--n400);font-size:16px}
 .section{padding:0 20px;display:flex;flex-direction:column;gap:8px}
 .section + .section{margin-top:18px}
@@ -51,6 +51,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .listrow{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 14px;
   border-radius:var(--r-md);background:var(--surface);width:100%;text-align:left}
 .listrow[aria-pressed="true"]{background:var(--a900);box-shadow:inset 0 0 0 1px var(--accent)}
+a.listrow,a.listrow:hover{color:var(--text)}
 .chev{flex:none;font-size:18px;color:var(--n600)}
 .switch{width:46px;height:28px;flex:none;border-radius:999px;border:1px solid var(--n700);position:relative}
 .switch i{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--n600);transition:left .15s,background .15s}
@@ -174,3 +175,94 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .tv-dowrow div{font-size:1.02cqw;letter-spacing:.12em;text-transform:uppercase;color:var(--n600);padding:0 0 .4cqw .2cqw}
 .tv-banner{display:flex;align-items:center;gap:1cqw;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--a800);padding:1cqw 1.4cqw;font-size:1.2cqw}
 .tv-banner .dot{width:.8cqw;height:.8cqw;border-radius:50%;background:var(--accent);flex:none}
+
+/* ---------- wide screens ---------------------------------------------------
+   The phone pages are phone-first, but a laptop or tablet has room for two
+   columns. Nothing here affects the TV pages (.tv owns its own layout).
+   For a wall display open /tv.html — that is the Pi view.                   */
+@media (min-width: 900px) {
+  .phone{
+    max-width:1120px;
+    display:grid;
+    grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
+    align-content:start;
+    column-gap:32px;
+    padding:0 32px 48px;
+  }
+  .phone > .topbar,
+  .phone > .viewbar,
+  .phone > #vacation,
+  .phone > .legend,
+  .phone > .cal,
+  .phone > form{grid-column:1 / -1}
+  .phone > .topbar,
+  .phone > .viewbar{padding-left:0;padding-right:0}
+  .phone > .section{padding:0}
+  .phone > .section + .section{margin-top:0}
+  /* a lone section shouldn't sit in a half-width column */
+  .phone > .section:only-of-type{grid-column:1 / -1}
+  .phone > p,.phone > .daysheet{grid-column:1 / -1}
+  .topbar h1{font-size:32px;white-space:nowrap}
+  .phone{row-gap:8px}
+  .daysheet{grid-column:1 / -1;border-radius:var(--r-lg);margin-top:20px}
+  .cal .day{height:76px}
+  /* Reserve a gutter to the right of the content grid and sit the FAB in it,
+     so it never covers a row. Below 1264px the grid shrinks to make room. */
+  .phone{max-width:1120px;margin-right:auto;margin-left:auto;padding-right:96px}
+  .fab{right:calc(max(0px, 50vw - 560px) + 20px)}
+}
+/* Sheets are modal on a phone; on a wide screen centre them as a dialog. */
+@media (min-width: 900px) {
+  .sheet-scrim{align-items:center}
+  .sheet{max-width:520px;border-radius:20px;padding-bottom:28px;box-shadow:0 0 0 1px var(--n700),0 24px 60px rgba(0,0,0,.7)}
+  .grabber{display:none}
+}
+
+/* ---------- bottom tab bar -------------------------------------------------
+   The phone app's spine: four destinations, always reachable. Today is home. */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(4,1fr);
+  background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(12px);
+  border-top:1px solid var(--divider);padding-bottom:env(safe-area-inset-bottom)}
+.tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  min-height:56px;font-size:10.5px;letter-spacing:.02em;color:var(--n500)}
+.tabbar a svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.6;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.tabbar a[aria-current="page"]{color:var(--accent)}
+.tabbar a:hover{color:var(--n300)}
+.tabbar a[aria-current="page"]:hover{color:var(--a300)}
+
+/* ---------- day / week / month switcher ----------
+   Always the same slot: its own row directly beneath the topbar, flush left. */
+.viewbar{padding:0 20px 4px;display:flex}
+.viewseg{display:inline-flex;width:max-content;align-self:flex-start;gap:2px;padding:3px;border-radius:999px;
+  background:var(--bg);box-shadow:inset 0 0 0 1px var(--divider);flex:none}
+.viewseg a{padding:7px 14px;border-radius:999px;font-size:12.5px;color:var(--n500);white-space:nowrap}
+.viewseg a[aria-current="page"]{background:var(--a900);color:var(--a100);box-shadow:inset 0 0 0 1px var(--accent)}
+.viewseg a:hover{color:var(--n300)}
+.viewseg a[aria-current="page"]:hover{color:var(--a100)}
+
+/* the FAB floats over the bottom-right, so the last rows need room beside it */
+.phone > .section:last-of-type,.phone > .wk,.phone > .cal ~ .daysheet{padding-bottom:76px}
+
+/* the tab bar occupies the bottom, so pages need clearance */
+.phone{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+.fab{bottom:calc(80px + env(safe-area-inset-bottom))}
+
+/* ---------- phone week view ---------- */
+.wk{padding:0 20px;display:flex;flex-direction:column;gap:10px}
+.wk-day{border-radius:var(--r-md);background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.wk-day[data-today="1"]{background:var(--a900);box-shadow:inset 0 0 0 1px var(--accent)}
+.wk-day > .hd{display:flex;align-items:baseline;gap:8px}
+.wk-day > .hd .lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--n500)}
+.wk-day[data-today="1"] > .hd .lbl{color:var(--a300)}
+.wk-day > .hd .num{font-size:17px;font-weight:500}
+.wk-day > .hd .cnt{margin-left:auto;font-size:11px;color:var(--n600)}
+.wk-row{display:grid;grid-template-columns:26px 64px 1fr;align-items:center;gap:10px}
+.wk-row .t{font-size:12.5px;font-weight:500;color:var(--a300)}
+.wk-row .n{font-size:13.5px;line-height:1.3;min-width:0}
+.wk-empty{font-size:12.5px;color:var(--n600)}
+
+@media (min-width: 900px) {
+  .tabbar{grid-template-columns:repeat(4,minmax(0,140px));justify-content:center}
+  .phone > .wk{grid-column:1 / -1;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+}

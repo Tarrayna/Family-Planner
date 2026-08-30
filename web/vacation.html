@@ -33,7 +33,7 @@
 </main>
 <script type="module">
 import { get, post } from './js/api.js';
-import { el, avatar, byId, $ } from './js/ui.js';
+import { el, avatar, byId, $, tabbar } from './js/ui.js';
 
 const people = byId(await get('/api/people'));
 const vacs = await get('/api/vacations');
@@ -95,6 +95,7 @@ $('#save').onclick = async () => {
     hide_tasks_on_tv: v.hide_tasks_on_tv, keep_calendar_events: v.keep_calendar_events });
   location.href = 'today.html';
 };
+tabbar();
 </script><script>
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 </script>

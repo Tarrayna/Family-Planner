@@ -14,7 +14,6 @@
 <main class="phone">
   <div class="topbar">
     <div><div class="kicker">Today</div><h1 id="date">—</h1></div>
-    <a class="btn btn-primary" style="min-height:36px;padding:6px 12px" href="month.html">Month</a>
   </div>
   <div id="vacation"></div>
   <div class="section">
@@ -27,12 +26,11 @@
     </div>
     <div id="tasks"></div>
   </div>
-  <div style="height:96px"></div>
 </main>
 <a class="fab" href="task.html" aria-label="Add">+</a>
 <script type="module">
 import { get, post } from './js/api.js';
-import { el, avatar, byId, fmtTime, poll, $, MONTH, DOW, isoDate } from './js/ui.js';
+import { el, avatar, byId, fmtTime, poll, $, MONTH, DOW, isoDate, tabbar } from './js/ui.js';
 
 const people = byId(await get('/api/people'));
 
@@ -86,6 +84,7 @@ async function render() {
   }
 }
 poll(render);
+tabbar();
 </script><script>
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 </script>

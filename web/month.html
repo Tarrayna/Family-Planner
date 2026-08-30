@@ -13,12 +13,13 @@
 <body>
 <main class="phone">
   <div class="topbar">
-    <div style="display:flex;align-items:center;gap:12px"><a class="back" href="today.html">‹</a><h1 id="title">—</h1></div>
+    <h1 id="title">—</h1>
     <div style="display:flex;gap:8px">
       <button class="back" id="prev" aria-label="Previous month">‹</button>
       <button class="back" id="next" aria-label="Next month">›</button>
     </div>
   </div>
+  <div class="viewbar" id="switch"></div>
   <div class="legend" id="legend"></div>
   <div class="cal" id="cal"></div>
   <div class="daysheet grow">
@@ -28,7 +29,7 @@
 </main>
 <script type="module">
 import { get } from './js/api.js';
-import { el, avatar, byId, fmtTime, isoDate, $, MONTH, DOW, WEEKDAY } from './js/ui.js';
+import { el, avatar, byId, fmtTime, isoDate, $, MONTH, DOW, WEEKDAY, tabbar, viewSwitch } from './js/ui.js';
 
 const people = byId(await get('/api/people'));
 const today = new Date();
@@ -36,6 +37,7 @@ let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
 let selected = isoDate(today);
 let data;
 
+$('#switch').replaceChildren(viewSwitch('month'));
 $('#legend').replaceChildren(...Object.values(people).map((p) =>
   el('div', {}, avatar(p, 20), p.name)));
 
@@ -97,6 +99,7 @@ function draw() {
 $('#prev').onclick = () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1); load(); };
 $('#next').onclick = () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1); load(); };
 load();
+tabbar();
 </script><script>
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 </script>

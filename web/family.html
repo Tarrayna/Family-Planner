@@ -12,13 +12,13 @@
 </head>
 <body>
 <main class="phone">
-  <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><a class="back" href="settings.html">‹</a><h1>Family</h1></div></div>
+  <div class="topbar"><h1>Family</h1></div>
   <div class="section" id="list"></div>
   <p class="muted" style="font-size:11.5px;padding:8px 20px">Anyone can edit anyone — no owners, no permissions.</p>
 </main>
 <script type="module">
 import { get } from './js/api.js';
-import { el, avatar, $ } from './js/ui.js';
+import { el, avatar, $, tabbar } from './js/ui.js';
 
 const people = await get('/api/people');
 const list = $('#list');
@@ -33,6 +33,7 @@ for (const p of people) {
 list.append(el('a', { class: 'listrow dashed', href: '/person.html?new=1' },
   el('div', { class: 'ava', style: 'width:44px;height:44px;border:1px dashed var(--n700);font-size:20px;color:var(--n500)' }, '+'),
   el('div', { class: 'grow muted', style: 'font-size:15px' }, 'Add a person')));
+tabbar();
 </script><script>
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 </script>

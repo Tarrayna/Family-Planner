@@ -30,7 +30,7 @@ a{color:var(--color-accent)} a:hover{color:var(--color-accent-300)}
 </helmet>
 <section class="dv-turn" id="t12">
 <div class="dv-thd"><a class="dv-tid" href="#t12">12</a><span class="dv-tname">The built frontend, running</span></div>
-<p class="dv-note">Every screen below is the real <code>handoff/web/</code> code, live — not a mockup. Interactions work: tap a task to check it off, tap a frequency chip in the repeat sheet, drag a colour swatch. Mock data slides to today automatically, so dates are always current. Serve the folder with <code>python3 -m http.server</code> and this is exactly what the Pi and the phones show.</p>
+<p class="dv-note">Every screen below is the real <code>web/</code> code, served live by this repo's own Caddy proxy against the real backend — not a mockup, not static mock data. Interactions work: tap a task to check it off, tap a frequency chip in the repeat sheet, switch Week/Month from the view switcher.</p>
 <div class="dv-opts">
 <sc-for list="{{ screens }}" as="s" hint-placeholder-count="12">
   <div class="dv-opt" id="{{ s.id }}">
@@ -39,26 +39,27 @@ a{color:var(--color-accent)} a:hover{color:var(--color-accent-300)}
   </div>
 </sc-for>
 </div>
-<p class="dv-next">These are live pages — edit the files in <code>handoff/web/</code> and these panels update. Ask me for a new screen and I'll add it as a real page, not a drawing.</p>
+<p class="dv-next">These are live pages — edit the files in <code>web/</code> and these panels update. Ask me for a new screen and I'll add it as a real page, not a drawing.</p>
 </section>
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   renderVals() {
     const S = [
-      ['12a', 'TV — Today + upcoming (the Pi default)', 'handoff/web/tv.html?layout=today', 1280, 720],
-      ['12b', 'TV — Week', 'handoff/web/tv-week.html?layout=week', 1280, 720],
-      ['12c', 'TV — Month', 'handoff/web/tv-month.html?layout=month', 1280, 720],
-      ['12d', "Phone — Who's using this phone?", 'handoff/web/who.html', 390, 844],
-      ['12e', 'Phone — Today (tap a task to check it off)', 'handoff/web/today.html', 390, 844],
-      ['12f', 'Phone — Month', 'handoff/web/month.html', 390, 844],
-      ['12g', 'Phone — New task', 'handoff/web/task.html', 390, 844],
-      ['12h', 'Phone — Repeat rule (tap the frequency chips)', 'handoff/web/repeat.html', 390, 844],
-      ['12i', 'Phone — Family', 'handoff/web/family.html', 390, 844],
-      ['12j', 'Phone — Edit person', 'handoff/web/person.html?id=p2', 390, 844],
-      ['12k', 'Phone — Google calendars', 'handoff/web/calendars.html', 390, 844],
-      ['12l', 'Phone — Vacation', 'handoff/web/vacation.html', 390, 844],
-      ['12m', 'Phone — Settings', 'handoff/web/settings.html', 390, 844],
+      ['12a', 'TV — Today + upcoming (the Pi default)', 'web/tv.html?layout=today', 1280, 720],
+      ['12b', 'TV — Week', 'web/tv-week.html?layout=week', 1280, 720],
+      ['12c', 'TV — Month', 'web/tv-month.html?layout=month', 1280, 720],
+      ['12d', "Phone — Who's using this phone?", 'web/who.html', 390, 844],
+      ['12e', 'Phone — Today (tap a task to check it off)', 'web/today.html', 390, 844],
+      ['12f', 'Phone — Week', 'web/week.html', 390, 844],
+      ['12g', 'Phone — Month', 'web/month.html', 390, 844],
+      ['12h', 'Phone — New task', 'web/task.html', 390, 844],
+      ['12i', 'Phone — Repeat rule (tap the frequency chips)', 'web/repeat.html', 390, 844],
+      ['12j', 'Phone — Family', 'web/family.html', 390, 844],
+      ['12k', 'Phone — Edit person', 'web/person.html', 390, 844],
+      ['12l', 'Phone — Google calendars', 'web/calendars.html', 390, 844],
+      ['12m', 'Phone — Vacation', 'web/vacation.html', 390, 844],
+      ['12n', 'Phone — Settings', 'web/settings.html', 390, 844],
     ];
     return {
       screens: S.map(([id, label, src, w, h]) => ({ id, label, src, w, h, anchor: '#' + id })),

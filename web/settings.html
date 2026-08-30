@@ -12,30 +12,34 @@
 </head>
 <body>
 <main class="phone">
-  <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><a class="back" href="today.html">‹</a><h1>Settings</h1></div></div>
+  <div class="topbar"><h1>Settings</h1></div>
   <div class="section">
     <div class="label">This phone</div>
     <a class="listrow" id="me" href="who.html"></a>
   </div>
   <div class="section">
     <div class="label">TV display</div>
+    <p class="muted" style="font-size:11.5px;margin:0 0 2px;line-height:1.5">What the screen on the wall shows. Applies within a minute.</p>
     <div id="layouts" style="display:flex;flex-direction:column;gap:8px"></div>
-  </div>
-  <div class="section">
-    <div class="label">Options</div>
-    <div id="options" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div id="options" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
   </div>
   <div class="section">
     <div class="label">Family</div>
-    <a class="listrow" href="family.html"><div class="grow" style="font-size:15px">People and colors</div><div class="chev">›</div></a>
-    <a class="listrow" href="calendars.html"><div class="grow" style="font-size:15px">Google calendars</div><div class="chev">›</div></a>
-    <a class="listrow" href="vacation.html"><div class="grow" style="font-size:15px">Vacation mode</div><div class="chev">›</div></a>
+    <a class="listrow" href="family.html">
+      <div class="grow"><div style="font-size:15px">People</div>
+      <div class="muted" style="font-size:11.5px">Names, colors, photos</div></div><div class="chev">›</div></a>
+    <a class="listrow" href="calendars.html">
+      <div class="grow"><div style="font-size:15px">Google calendars</div>
+      <div class="muted" style="font-size:11.5px">Which ones sync, and who they belong to</div></div><div class="chev">›</div></a>
+    <a class="listrow" href="vacation.html" id="vacrow">
+      <div class="grow"><div style="font-size:15px">Vacation mode</div>
+      <div class="muted" style="font-size:11.5px" id="vacsub">Pause chores while you're away</div></div><div class="chev">›</div></a>
   </div>
   <p class="muted" style="font-size:11.5px;padding:12px 20px">Changes apply to the TV within a minute — no restart needed.</p>
 </main>
 <script type="module">
 import { get, patch, whoami } from './js/api.js';
-import { el, avatar, byId, $ } from './js/ui.js';
+import { el, avatar, byId, $, tabbar } from './js/ui.js';
 
 const people = byId(await get('/api/people'));
 const cfg = await get('/api/settings/display');
@@ -79,6 +83,7 @@ function drawOptions() {
       }, t)))));
 }
 drawOptions();
+tabbar();
 </script><script>
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 </script>
