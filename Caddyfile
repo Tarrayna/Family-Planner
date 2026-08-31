@@ -28,6 +28,11 @@ planner.home, 192.168.1.126 {
 
 	handle /photos/* {
 		reverse_proxy api:8080
+		# Same reasoning as the no-cache header below: a person's photo URL
+		# never changes even when a re-uploaded photo's content does, so
+		# without forcing revalidation the browser can keep showing an old
+		# picture indefinitely after a re-upload.
+		header Cache-Control "no-cache"
 	}
 
 	handle {
