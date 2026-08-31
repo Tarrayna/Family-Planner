@@ -30,7 +30,7 @@ export function avatar(person, size = 28, ring = 1.5) {
       (person?.photo_url ? `background-image:url(${person.photo_url})` : ''),
   });
   if (!person?.photo_url && person?.name) {
-    a.append(el('div', { style: `font-size:${Math.round(size * 0.42)}px;color:${c}` }, person.name[0]));
+    a.append(el('div', { style: `font-size:${Math.round(size * 0.42)}px;line-height:1;color:${c}` }, person.name[0]));
   }
   return a;
 }
@@ -45,7 +45,7 @@ export function avatarCq(person, cq = 2, ring = 0.12) {
       (person?.photo_url ? `background-image:url(${person.photo_url})` : ''),
   });
   if (!person?.photo_url && person?.name) {
-    a.append(el('div', { style: `font-size:${(cq * 0.45).toFixed(2)}cqw;color:${c}` }, person.name[0]));
+    a.append(el('div', { style: `font-size:${(cq * 0.45).toFixed(2)}cqw;line-height:1;color:${c}` }, person.name[0]));
   }
   return a;
 }

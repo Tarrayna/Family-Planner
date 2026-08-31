@@ -1,8 +1,9 @@
 import os
 import uuid
+from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile
 from itsdangerous import URLSafeSerializer
 from pydantic import BaseModel
 
@@ -10,6 +11,10 @@ from app import stream
 
 router = APIRouter()
 session_signer = URLSafeSerializer(os.environ["SESSION_SECRET"], salt="planner-session")
+
+PHOTOS_DIR = Path("photos")
+PHOTOS_DIR.mkdir(exist_ok=True)
+ALLOWED_PHOTO_TYPES = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
 
 
 class PersonIn(BaseModel):
@@ -74,6 +79,25 @@ async def update_person(person_id: uuid.UUID, body: PersonPatch, request: Reques
             person_id,
             *fields.values(),
         )
+    if row is None:
+        raise HTTPException(404, "person not found")
+    stream.broadcast("people")
+    return _to_person(row)
+
+
+@router.post("/api/people/{person_id}/photo")
+async def upload_photo(person_id: uuid.UUID, request: Request, file: UploadFile = File(...)):
+    ext = ALLOWED_PHOTO_TYPES.get(file.content_type)
+    if ext is None:
+        raise HTTPException(415, "photo must be JPEG, PNG, or WebP")
+    filename = f"{person_id}{ext}"
+    (PHOTOS_DIR / filename).write_bytes(await file.read())
+    row = await request.app.state.db.fetchrow(
+        "UPDATE person SET photo_path = $2 WHERE id = $1 "
+        "RETURNING id, name, color, photo_path, has_phone",
+        person_id,
+        filename,
+    )
     if row is None:
         raise HTTPException(404, "person not found")
     stream.broadcast("people")

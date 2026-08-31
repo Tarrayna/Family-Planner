@@ -26,15 +26,22 @@ planner.home, 192.168.1.126 {
 		reverse_proxy api:8080
 	}
 
+	handle /photos/* {
+		reverse_proxy api:8080
+	}
+
 	handle {
 		root * /srv/web
 		try_files {path} /index.html
 		file_server
+		# Force revalidation on every request (still cheap via ETag/304) —
+		# this app is under active development and phones were repeatedly
+		# showing stale HTML/CSS/JS from heuristic caching (no explicit
+		# Cache-Control means browsers may serve from cache without even
+		# asking the server). A manual reload should always reflect what's
+		# actually on disk.
+		header Cache-Control "no-cache"
 	}
 
 	encode gzip
-
-	# the service worker must never be cached stale
-	@sw path /sw.js
-	header @sw Cache-Control "no-cache"
 }

@@ -7,6 +7,11 @@
   --font:"Inter",system-ui,-apple-system,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box}
+/* An element's own display:flex/grid/etc. (e.g. .sheet-scrim, .btn) beats the
+   browser's default [hidden]{display:none} at equal specificity, since that
+   default is a user-agent rule. Force it so toggling .hidden always works
+   regardless of what other classes an element has. */
+[hidden]{display:none!important}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
 h1,h2,h3{font-weight:500;letter-spacing:-.015em;line-height:1.12;margin:0}

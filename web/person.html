@@ -36,6 +36,20 @@
     </div>
   </form>
 </div>
+<div class="sheet-scrim" id="cropScrim" hidden>
+  <div class="sheet">
+    <div class="grabber"></div>
+    <div class="sheet-head"><h2>Crop photo</h2><button type="button" class="muted" style="font-size:13px" id="cropCancel">Cancel</button></div>
+    <div id="cropStage" style="position:relative;width:240px;height:240px;margin:0 auto;border-radius:50%;overflow:hidden;background:var(--bg);touch-action:none;cursor:grab">
+      <img id="cropImg" draggable="false" style="position:absolute">
+    </div>
+    <div class="row" style="align-items:center;gap:10px;padding:0 4px">
+      <span class="muted" style="font-size:12px">Zoom</span>
+      <input type="range" id="cropZoom" min="1" max="3" step="0.01" value="1" style="flex:1">
+    </div>
+    <button class="btn btn-primary btn-block" type="button" id="cropSave">Use photo</button>
+  </div>
+</div>
 <script type="module">
 import { get, post, patch, send } from './js/api.js';
 import { el, avatar, $ } from './js/ui.js';
@@ -58,9 +72,70 @@ if (existing) { $('#heading').textContent = 'Edit ' + existing.name; $('#remove'
 $('#name').value = state.name;
 $('#name').oninput = (e) => { state.name = e.target.value; draw(); };
 
+// Crop sheet: pick a photo, drag to reposition, slider to zoom, then export
+// exactly what's visible in the circular guide as the final square image
+// (CSS already renders every avatar as a circle, so no need to mask alpha).
+const CROP_STAGE = 240, CROP_OUT = 1024;
+let crop = null;
+
 $('#photo').onchange = (e) => {
   const file = e.target.files[0];
-  if (file) { state.photo_url = URL.createObjectURL(file); state.file = file; draw(); }
+  e.target.value = '';
+  if (file) openCropper(file);
+};
+
+function openCropper(file) {
+  const img = $('#cropImg');
+  img.onload = () => {
+    const baseScale = CROP_STAGE / Math.min(img.naturalWidth, img.naturalHeight);
+    crop = { naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight, baseScale, zoom: 1, left: 0, top: 0 };
+    $('#cropZoom').value = '1';
+    layoutCropImg(true);
+    $('#cropScrim').hidden = false;
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+function layoutCropImg(center = false) {
+  const scale = crop.baseScale * crop.zoom;
+  const w = crop.naturalWidth * scale, h = crop.naturalHeight * scale;
+  if (center) { crop.left = (CROP_STAGE - w) / 2; crop.top = (CROP_STAGE - h) / 2; }
+  crop.left = Math.min(0, Math.max(CROP_STAGE - w, crop.left));
+  crop.top = Math.min(0, Math.max(CROP_STAGE - h, crop.top));
+  const img = $('#cropImg');
+  img.style.width = w + 'px'; img.style.height = h + 'px';
+  img.style.left = crop.left + 'px'; img.style.top = crop.top + 'px';
+}
+
+$('#cropZoom').oninput = (e) => { crop.zoom = Number(e.target.value); layoutCropImg(); };
+
+let dragFrom = null;
+$('#cropStage').onpointerdown = (e) => {
+  $('#cropStage').setPointerCapture(e.pointerId);
+  dragFrom = { x: e.clientX, y: e.clientY, left: crop.left, top: crop.top };
+};
+$('#cropStage').onpointermove = (e) => {
+  if (!dragFrom) return;
+  crop.left = dragFrom.left + (e.clientX - dragFrom.x);
+  crop.top = dragFrom.top + (e.clientY - dragFrom.y);
+  layoutCropImg();
+};
+$('#cropStage').onpointerup = $('#cropStage').onpointercancel = () => { dragFrom = null; };
+
+$('#cropCancel').onclick = () => { $('#cropScrim').hidden = true; };
+
+$('#cropSave').onclick = () => {
+  const out = document.createElement('canvas');
+  out.width = CROP_OUT; out.height = CROP_OUT;
+  const scaleOut = CROP_OUT / CROP_STAGE;
+  const img = $('#cropImg');
+  out.getContext('2d').drawImage(img, crop.left * scaleOut, crop.top * scaleOut, img.width * scaleOut, img.height * scaleOut);
+  out.toBlob((blob) => {
+    state.file = blob;
+    state.photo_url = URL.createObjectURL(blob);
+    draw();
+    $('#cropScrim').hidden = true;
+  }, 'image/jpeg', 0.96);
 };
 
 function draw() {
@@ -85,9 +160,13 @@ draw();
 $('#form').onsubmit = async (e) => {
   e.preventDefault();
   const body = { name: state.name, color: state.color, has_phone: state.has_phone };
-  // Photo upload is multipart in the real API; see SPEC.md §6.
-  if (existing) await patch('/api/people/' + existing.id, body);
-  else await post('/api/people', body);
+  const person = existing ? await patch('/api/people/' + existing.id, body) : await post('/api/people', body);
+  if (state.file) {
+    const fd = new FormData();
+    fd.append('file', state.file, 'avatar.jpg');
+    try { await fetch('/api/people/' + person.id + '/photo', { method: 'POST', body: fd }); }
+    catch (e) { console.warn('[person] photo upload failed, offline?', e); }
+  }
   location.href = 'family.html';
 };
 $('#remove').onclick = async () => {

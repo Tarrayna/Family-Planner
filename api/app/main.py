@@ -3,8 +3,10 @@ import datetime as dt
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app import db, people, settings, stream, tasks, vacations
+from app.people import PHOTOS_DIR
 
 RECURRENCE_JOB_INTERVAL = dt.timedelta(hours=24)
 
@@ -38,6 +40,7 @@ app.include_router(settings.router)
 app.include_router(stream.router)
 app.include_router(tasks.router)
 app.include_router(vacations.router)
+app.mount("/photos", StaticFiles(directory=PHOTOS_DIR), name="photos")
 
 
 @app.get("/api/health")
