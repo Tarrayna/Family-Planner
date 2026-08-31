@@ -35,7 +35,7 @@ list.append(el('a', { class: 'listrow dashed', href: '/person.html?new=1' },
   el('div', { class: 'grow muted', style: 'font-size:15px' }, 'Add a person')));
 tabbar();
 </script><script>
-if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 </script>
 </body>
 </html>

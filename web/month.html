@@ -101,7 +101,7 @@ $('#next').onclick = () => { cursor = new Date(cursor.getFullYear(), cursor.getM
 load();
 tabbar();
 </script><script>
-if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 </script>
 </body>
 </html>

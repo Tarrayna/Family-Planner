@@ -97,7 +97,7 @@ $('#remove').onclick = async () => {
   }
 };
 </script><script>
-if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 </script>
 </body>
 </html>
