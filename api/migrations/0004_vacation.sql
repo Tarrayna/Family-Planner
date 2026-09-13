@@ -1,5 +1,5 @@
 CREATE TABLE vacation (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
     name TEXT NOT NULL,
     starts_on DATE NOT NULL,
     ends_on DATE NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE vacation (
     pause_overdue BOOLEAN NOT NULL DEFAULT true,
     hide_tasks_on_tv BOOLEAN NOT NULL DEFAULT true,
     keep_calendar_events BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT (now())
 );
 
 -- Pre-trip checklist items are ordinary tasks tagged with a trip and a

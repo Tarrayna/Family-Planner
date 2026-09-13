@@ -5,7 +5,8 @@ Design lives in the Omelette project; this folder is the buildable scaffolding.
 ## Contents
 
 - `SPEC.md` — the backend specification. Hand this to Claude Code as the brief.
-- `docker-compose.yml` — proxy / api / db.
+- `docker-compose.yml` — proxy / api. The api owns a SQLite database file
+  (`api/app/db.py`) — no separate database service to run.
 - `Caddyfile` — TLS + static frontend + `/api` proxy. Read the comment at the
   top: the PWA will not install without a trusted certificate.
 - `.env.example` — copy to `.env` and fill in.
@@ -32,6 +33,35 @@ docker compose up -d
 
 Then, on each phone: open the site, trust the CA if you used `tls internal`,
 tap your name, and Add to Home Screen.
+
+## Deploy & backup (on the VM)
+
+Two scripts, each meant to run from a systemd timer on the deploy server:
+
+- `deploy.sh` — polls `origin/main`; if there's a new commit, fast-forwards
+  and rebuilds/restarts (`git merge --ff-only` — never resets or discards).
+  A sample timer:
+
+  ```ini
+  # /etc/systemd/system/planner-deploy.timer
+  [Timer]
+  OnBootSec=1min
+  OnUnitActiveSec=1min
+
+  [Install]
+  WantedBy=timers.target
+  ```
+
+  paired with a `.service` unit whose `ExecStart` runs `deploy.sh` from the
+  repo checkout.
+
+- `backup.sh` — nightly; takes a consistent SQLite backup (`.backup`, safe
+  against the live WAL-mode database) plus a tarball of the `photos` volume,
+  writes both to the NAS mount, and prunes old copies. Same pattern, on a
+  once-daily timer (`OnCalendar=daily`). Needs the `sqlite3` CLI on the host
+  (just for the post-backup integrity check) and `NAS_BACKUP_DIR` set to
+  wherever the NAS share is mounted — set it in the `.service` unit's
+  `Environment=`.
 
 ## The frontend
 

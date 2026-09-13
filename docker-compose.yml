@@ -17,34 +17,18 @@ services:
     build: ./api
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://planner:${DB_PASSWORD}@db:5432/planner
+      DATABASE_URL: /app/data/planner.db
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY}
       SESSION_SECRET: ${SESSION_SECRET}
       TZ: America/Chicago
     volumes:
+      - sqlite_data:/app/data
       - photos:/app/photos
-    depends_on:
-      db:
-        condition: service_healthy
-
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: planner
-      POSTGRES_USER: planner
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U planner"]
-      interval: 5s
-      retries: 10
 
 volumes:
-  db_data:
+  sqlite_data:
   photos:
   caddy_data:
   caddy_config:

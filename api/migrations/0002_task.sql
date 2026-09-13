@@ -1,5 +1,5 @@
 CREATE TABLE task (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
     title TEXT NOT NULL,
     assignee_id UUID REFERENCES person(id) ON DELETE SET NULL,
     due_date DATE,
@@ -9,5 +9,5 @@ CREATE TABLE task (
     rrule_count INTEGER,
     series_id UUID,
     completed_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT (now())
 );
