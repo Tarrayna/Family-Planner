@@ -6,8 +6,6 @@
 <meta name="theme-color" content="#161826">
 <title>Vacation</title>
 <link rel="manifest" href="manifest.json">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -44,7 +42,7 @@ const TOGGLES = [
   ['pause_repeating', 'Pause repeating chores', 'Resume the day you get back'],
   ['pause_overdue', 'Stop overdue counting', "Nothing goes late while you're away"],
   ['hide_tasks_on_tv', 'Hide tasks on the TV', 'Show the trip countdown instead'],
-  ['keep_calendar_events', 'Keep calendar events', 'Google events still show'],
+  ['keep_calendar_events', 'Keep calendar events', 'Synced events still show'],
 ];
 function drawToggles() {
   $('#toggles').replaceChildren(...TOGGLES.map(([key, title, sub]) => el('button', {

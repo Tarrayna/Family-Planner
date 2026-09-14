@@ -1,3 +1,10 @@
+/* Self-hosted (no Google Fonts CDN request) — one variable-font file covers
+   all four weights; the font-weight on each @font-face just sets which
+   instance of the variable font that weight resolves to. */
+@font-face{font-family:"Inter";font-style:normal;font-weight:400;font-display:swap;src:url("../fonts/inter-latin.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:500;font-display:swap;src:url("../fonts/inter-latin.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:600;font-display:swap;src:url("../fonts/inter-latin.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:700;font-display:swap;src:url("../fonts/inter-latin.woff2") format("woff2")}
 :root{
   --bg:#161826; --surface:#232532; --text:#e9e9ed; --accent:#9184d9;
   --divider:color-mix(in srgb,#e9e9ed 16%,transparent);

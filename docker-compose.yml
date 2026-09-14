@@ -18,9 +18,6 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://planner:${DB_PASSWORD}@db:5432/planner
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY}
       SESSION_SECRET: ${SESSION_SECRET}
       TZ: America/Chicago
     volumes:
