@@ -19,6 +19,7 @@ services:
     environment:
       DATABASE_URL: /app/data/planner.db
       SESSION_SECRET: ${SESSION_SECRET}
+      PHONE_URL: https://calendar.home
       TZ: America/Chicago
     volumes:
       - sqlite_data:/app/data

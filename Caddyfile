@@ -38,6 +38,20 @@
 		# picture indefinitely after a re-upload.
 		header Cache-Control "no-cache"
 	}
+
+	# Lets a device grab the CA's public certificate from Settings instead of
+	# a manual docker compose cp + file transfer per device. Scoped to this
+	# exact path and hard-rewritten to this exact filename on purpose — the
+	# PKI directory also holds root.key (and an intermediate cert/key) right
+	# next to root.crt, and root.key must never be reachable: it's what lets
+	# whoever holds it mint certificates any device that's installed this CA
+	# would trust.
+	handle /ca.crt {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		header Content-Type "application/x-x509-ca-cert"
+		file_server
+	}
 }
 
 calendar.home {

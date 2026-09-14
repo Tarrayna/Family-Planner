@@ -33,9 +33,12 @@ cp .env.example .env      # fill it in
 docker compose up -d
 ```
 
-Then, on each phone: open `https://calendar.home` (trust the CA first if
-connecting directly rather than through a front-door proxy with its own
-cert — see Caddyfile), tap your name, and Add to Home Screen.
+Then, on each phone: open `https://calendar.home`, tap your name, and Add
+to Home Screen. If you're connecting directly rather than through a
+front-door proxy with its own cert (see Caddyfile), you'll hit a
+certificate warning first — Settings → Security → Download certificate
+grabs Caddy's root CA (`/ca.crt`) so you can install it once per device and
+stop seeing that warning.
 
 Point the wall display / TV kiosk at `https://calendar-read.home` instead —
 same app, but it always lands on the read-only calendar view (no "who's

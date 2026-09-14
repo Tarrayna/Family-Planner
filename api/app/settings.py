@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Request
@@ -21,12 +22,15 @@ def _to_display(row) -> dict:
         "show_weather": row["show_weather"],
         "show_upcoming": row["show_upcoming"],
         "time_format": row["time_format"],
-        # No server config for this: the TV's own page origin (LAN IP or
-        # planner.home, whatever it was loaded as) already is a phone-
-        # reachable URL, so js/tv.js falls back to location.origin when this
-        # is null. A static value here would just be one more place the LAN
-        # IP drift (see Caddyfile) could go stale.
-        "phone_url": None,
+        # The TV and the phone app are two different hostnames now
+        # (calendar-read.home vs. calendar.home — see Caddyfile), so the
+        # TV's own page origin is no longer a phone-reachable URL and
+        # js/tv.js's location.origin fallback would point the QR code back
+        # at the read-only view. PHONE_URL is a fixed hostname, not an IP,
+        # so — unlike the old LAN-IP-drift concern this comment used to
+        # describe — it doesn't need updating unless the hostname itself
+        # changes.
+        "phone_url": os.environ.get("PHONE_URL"),
     }
 
 
