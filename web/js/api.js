@@ -6,7 +6,6 @@ const MOCK = {
   '/api/day': 'mock/day.json',
   '/api/range': 'mock/range.json',
   '/api/people': 'mock/people.json',
-  '/api/calendars': 'mock/calendars.json',
   '/api/vacations': 'mock/vacations.json',
   '/api/settings/display': 'mock/display.json',
 };

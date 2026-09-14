@@ -6,7 +6,7 @@ Self-hosted family planner. LAN-only. Three Docker containers.
 
 - **proxy** — Caddy. TLS (required for the phone PWA's service worker), serves the
   static frontend, routes `/api/*` to the API.
-- **api** — application server. Owns all data, recurrence expansion, Google sync.
+- **api** — application server. Owns all data, recurrence expansion.
 - **db** — Postgres.
 
 The Pi runs a kiosk browser at `/tv.html`. Phones open `/` (the PWA). Same
@@ -48,18 +48,6 @@ Recurrence is an RFC 5545 RRULE string:
 
 Use a library (python-dateutil / rrule.js). Do not hand-roll expansion.
 
-### event
-`id`, `title`, `starts_at`, `ends_at`, `all_day`, `calendar_id`,
-`google_event_id` (null = created here), `assignee_id` (nullable),
-`assignee_locked` (bool — true once a human reassigned it, so sync never
-overwrites the choice), `series_key`, `updated_at`.
-
-### calendar
-`id`, `owner_person_id`, `google_calendar_id`, `name`, `enabled`,
-`auto_assign`, `sync_token`, `last_synced_at`.
-
-Shared calendars get `auto_assign = false` so their events stay unassigned.
-
 ### vacation
 `id`, `name`, `starts_on`, `ends_on`, `pause_repeating`, `pause_overdue`,
 `hide_tasks_on_tv`, `keep_calendar_events`, `created_at`.
@@ -82,24 +70,8 @@ Computed server-side so the TV and phone can never disagree.
 - **Recurrence expansion.** Materialize concrete rows for a rolling window
   (today − 30d → today + 90d) on write and via a nightly job. Completing one
   instance never affects the series.
-- **Auto-assign.** On sync, an event from a calendar with `auto_assign` gets
-  `assignee_id = calendar.owner_person_id` — only when `assignee_locked` is
-  false. Reassignment sets the lock. "Remember this series" applies the choice to
-  every event sharing `series_key`, present and future.
 
-## 4. Google Calendar sync
-
-- OAuth per person; refresh token encrypted at rest. Each person authorizes from
-  their own phone.
-- Scope `calendar.events` (planner-created events write back to the chosen
-  calendar). Everything else is read.
-- Incremental sync via `syncToken`, polled every 2–5 min. Full re-sync on HTTP 410.
-- **Reassignment never writes back to Google.** Google owns event content; the
-  planner owns who it belongs to.
-- Dead refresh token → mark the calendar stale, show "Google Calendar
-  disconnected". Tasks keep working; events freeze at last sync.
-
-## 5. Identity
+## 4. Identity
 
 No accounts, no passwords, no pairing codes.
 
@@ -110,17 +82,15 @@ MAC addresses are **not** available to browsers; don't try. This is only safe
 because the service is LAN-only. Do not expose the proxy to the internet without
 adding real auth.
 
-## 6. API surface
+## 5. API surface
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /api/day?date=` | Everything Today needs: events, tasks due, overdue, weather, active vacation |
+| `GET /api/day?date=` | Everything Today needs: tasks due, overdue, weather, active vacation |
 | `GET /api/range?from=&to=` | Week and month grids |
 | `POST /api/tasks` · `PATCH /api/tasks/:id` | Create/edit, including RRULE fields |
 | `POST /api/tasks/:id/complete` | Check off (and un-check) |
-| `POST /api/events` · `PATCH /api/events/:id` | Create in planner; reassign (sets lock) |
 | `GET/POST/PATCH/DELETE /api/people` | Name, color, photo, has_phone |
-| `GET /api/calendars` · `PATCH /api/calendars/:id` | Per-person list, enable / auto-assign |
 | `GET/POST /api/vacations` | Setup, toggles, generated checklist |
 | `GET/PATCH /api/settings/display` | Which layout the TV shows; written from the phone |
 | `GET /api/stream` | Server-sent events — TV re-renders on any change |
@@ -128,7 +98,7 @@ adding real auth.
 The TV caches the last good `/api/day` and shows it behind a "Showing
 yesterday's plan" banner when the API is unreachable.
 
-## 7. Build order
+## 6. Build order
 
 1. Containers, Postgres, Caddy with a working cert. **PWA installability was
    never actually achieved** — Chrome/Brave showed no install option on
@@ -141,22 +111,27 @@ yesterday's plan" banner when the API is unreachable.
 3. Tasks with plain due dates; TV Today reading `/api/day`.
 4. Recurrence. Largest single piece — use a library, write tests for
    "2nd Wednesday" and "every 3 weeks until".
-5. Google OAuth and sync, one account first. **Built last, deliberately** —
-   reordered below steps 6 and 7 so the rest of the app works before
-   taking on Google's complexity.
-6. Vacations and the pre-trip checklist. *(built before step 5, see above)*
-7. Week and month views, then the display-settings switch. *(also built
-   before step 5)*
+5. Vacations and the pre-trip checklist.
+6. Week and month views, then the display-settings switch.
 
-## 8. Open questions
+## 7. Open questions
 
 - How does a person without a phone check off their own tasks? Shared tablet,
   a parent doing it, or a touchscreen on the Pi.
 - Weather source — needs an outbound call and an API key.
 - Backups: nightly `pg_dump` to somewhere off the Pi, from day one. **Not yet
   implemented** — flag again once the db has real data worth losing.
+- External calendar sync (importing events from an outside calendar service)
+  has no design — see Resolved below on why it isn't Google, and pick a
+  different approach if it's ever wanted.
 
 ### Resolved
 
 - **Pre-trip checklist source** (2026-08-29): fixed editable template, not
   "learn from past trips" — see the vacation section in §2.
+- **No Google Calendar sync** (2026-09-13): ruled out entirely, not just
+  deferred — Google gets no access to this app's data. Removed the `event`/
+  `calendar` data model, the auto-assign rule, and the `/api/events` ·
+  `/api/calendars` endpoints, all of which existed only to support it. If
+  external calendar sync is wanted later, it needs a non-Google design
+  (e.g. CalDAV, which also covers Fastmail and iCloud) from scratch.

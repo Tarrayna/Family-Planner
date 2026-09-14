@@ -138,8 +138,8 @@ async def range_(
     return {
         "from": date_from.isoformat(),
         "to": date_to.isoformat(),
-        # No event system yet (that's Google sync, deliberately deferred) —
-        # week/month grids render fine with an empty events list until then.
+        # No event system (no external calendar sync is planned) — week/month
+        # grids render fine with an empty events list.
         "events": [],
         "tasks": [_to_task(r, today) for r in rows],
     }

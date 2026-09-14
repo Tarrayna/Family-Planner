@@ -82,7 +82,7 @@ export function poll(fn, ms = 60000) {
 
 // --- navigation --------------------------------------------------------------
 // Four destinations. Today is home; Calendar carries the day/week/month switch;
-// Family is people; Settings holds the TV display, Google and vacation mode.
+// Family is people; Settings holds the TV display and vacation mode.
 const ICON = {
   today: 'M4 6.5h16M4 6.5a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5zM8 3v4M16 3v4M8 12h8M8 16h5',
   calendar: 'M3.5 9.5h17M5 5h14a1.5 1.5 0 0 1 1.5 1.5v12A1.5 1.5 0 0 1 19 20H5a1.5 1.5 0 0 1-1.5-1.5v-12A1.5 1.5 0 0 1 5 5M8 13h2M14 13h2M8 16.5h2M14 16.5h2',

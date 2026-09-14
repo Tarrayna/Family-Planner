@@ -13,32 +13,28 @@
       "title": "Farmers market",
       "starts_at": "2026-08-09T09:00:00",
       "sub": "Family calendar",
-      "assignee_id": "p1",
-      "google": true
+      "assignee_id": "p1"
     },
     {
       "id": "e2",
       "title": "Swim practice",
       "starts_at": "2026-08-09T11:30:00",
       "sub": "Rec center · 45 min",
-      "assignee_id": "p3",
-      "google": true
+      "assignee_id": "p3"
     },
     {
       "id": "e3",
       "title": "Grocery run",
       "starts_at": "2026-08-09T13:00:00",
       "sub": "List on the fridge",
-      "assignee_id": "p1",
-      "google": false
+      "assignee_id": "p1"
     },
     {
       "id": "e4",
       "title": "Dinner at Grandma's",
       "starts_at": "2026-08-09T18:00:00",
       "sub": "Bring the peach cobbler",
-      "assignee_id": "p2",
-      "google": true
+      "assignee_id": "p2"
     }
   ],
   "tasks": [

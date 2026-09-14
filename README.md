@@ -77,7 +77,6 @@ serves it as-is; there is nothing to compile.
 | `task.html` | Add / edit a task |
 | `repeat.html` | Repeat rule builder — emits a real RRULE |
 | `family.html` · `person.html` | Family list; edit anyone (name, colour, photo, phone) |
-| `calendars.html` | Per-person Google calendars + auto-assign |
 | `vacation.html` | Vacation setup and the pre-trip checklist |
 | `settings.html` | This phone, TV layout, options |
 | `tv.html` · `tv-week.html` · `tv-month.html` | The Pi display — point the kiosk at `/tv.html` |
