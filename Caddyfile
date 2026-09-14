@@ -1,27 +1,31 @@
-# planner.home — LAN only.
+# calendar.home / calendar-read.home — LAN only, or reached through a
+# reverse proxy in front (e.g. Nginx Proxy Manager) that holds its own real
+# certificate.
 #
-# The PWA needs real HTTPS for its service worker. Two workable routes:
+# Two hostnames, two experiences on the same app:
+#   calendar.home       the interactive phone/family app
+#   calendar-read.home  read-only TV view — always the calendar, never asks
+#                        who's using it. Same app, same api, just a
+#                        different landing page.
 #
-#  A) You own a domain: use a DNS-01 challenge so no port needs to be open.
-#     Requires a Caddy build with your DNS provider's plugin.
-#
-#  B) Internal CA (below): Caddy issues its own cert. Works immediately, but
-#     each device must trust Caddy's root CA once
-#     (/data/caddy/pki/authorities/local/root.crt) or the service worker
-#     will not register.
+# The PWA needs real HTTPS for its service worker, hence tls internal below.
+# Each device must trust Caddy's root CA once
+# (/data/caddy/pki/authorities/local/root.crt) to use either hostname
+# directly — not needed when reached through a front door that already
+# presents its own trusted certificate (that proxy's connection to Caddy is
+# just a backend hop, which such proxies don't validate by default).
 
-#  Dev-only: this box's current LAN IP is listed as an alternate address so
-#  phones can reach it without any router DNS setup. Update it if the IP
-#  changes, or drop it once planner.home resolves for real. default_sni is
-#  required too: browsers send no SNI for a literal IP, so without it Caddy
-#  can't pick which cert to present and the handshake fails.
+# default_sni: a proxy in front of Caddy typically won't forward SNI on its
+# connection to the backend (nginx-based ones don't by default), so without
+# this Caddy can't tell which certificate to present and the handshake
+# fails. Doesn't affect which of the two sites below actually handles the
+# request — that's decided by the Host header once the request is
+# decrypted, same either way.
 {
-	default_sni 192.168.1.126
+	default_sni calendar.home
 }
 
-planner.home, 192.168.1.126 {
-	tls internal
-
+(shared_backend) {
 	handle /api/* {
 		reverse_proxy api:8080
 	}
@@ -34,6 +38,11 @@ planner.home, 192.168.1.126 {
 		# picture indefinitely after a re-upload.
 		header Cache-Control "no-cache"
 	}
+}
+
+calendar.home {
+	tls internal
+	import shared_backend
 
 	handle {
 		root * /srv/web
@@ -45,6 +54,22 @@ planner.home, 192.168.1.126 {
 		# Cache-Control means browsers may serve from cache without even
 		# asking the server). A manual reload should always reflect what's
 		# actually on disk.
+		header Cache-Control "no-cache"
+	}
+
+	encode gzip
+}
+
+calendar-read.home {
+	tls internal
+	import shared_backend
+
+	handle {
+		root * /srv/web
+		@root path /
+		rewrite @root /tv.html
+		try_files {path} /tv.html
+		file_server
 		header Cache-Control "no-cache"
 	}
 

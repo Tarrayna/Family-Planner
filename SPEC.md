@@ -1,19 +1,21 @@
 # Family Planner — backend specification
 
-Self-hosted family planner. LAN-only. Three Docker containers.
+Self-hosted family planner. LAN-only. Two Docker containers.
 
 ## 1. Shape of the system
 
 - **proxy** — Caddy. TLS (required for the phone PWA's service worker), serves the
   static frontend, routes `/api/*` to the API.
-- **api** — application server. Owns all data, recurrence expansion.
-- **db** — Postgres.
+- **api** — application server. Owns all data, recurrence expansion, and the
+  SQLite database file (`api/app/db.py`) — no separate database container.
 
-The Pi runs a kiosk browser at `/tv.html`. Phones open `/` (the PWA). Same
-build, the route picks the shell. (Every page is addressed with its `.html`
+The Pi runs a kiosk browser at `https://calendar-read.home`. Phones open
+`https://calendar.home` (the PWA). Same build — Caddy serves both hostnames
+from the same `web/` folder and API, just with a different landing page
+(see Caddyfile). (Every non-root page is still addressed with its `.html`
 suffix — Caddy's SPA fallback only knows the literal filename, so an
-extensionless `/tv` actually resolves to `index.html`'s phone-identity
-redirect, not the TV view. Point the kiosk at `/tv.html` specifically.)
+extensionless `/tv` on `calendar.home` resolves to `index.html`'s
+phone-identity redirect, not the TV view.)
 
 ## 2. Data model
 

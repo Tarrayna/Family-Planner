@@ -7,8 +7,10 @@ Design lives in the Omelette project; this folder is the buildable scaffolding.
 - `SPEC.md` — the backend specification. Hand this to Claude Code as the brief.
 - `docker-compose.yml` — proxy / api. The api owns a SQLite database file
   (`api/app/db.py`) — no separate database service to run.
-- `Caddyfile` — TLS + static frontend + `/api` proxy. Read the comment at the
-  top: the PWA will not install without a trusted certificate.
+- `Caddyfile` — TLS + static frontend + `/api` proxy, split into two
+  hostnames (`calendar.home` for the app, `calendar-read.home` for the
+  read-only TV view — see the comment at the top). The PWA will not install
+  without a trusted certificate.
 - `.env.example` — copy to `.env` and fill in.
 - `web/manifest.json`, `web/sw.js` — the PWA pieces. Drop your built frontend
   alongside them in `web/`; you still need to add `icons/` (192, 512, and a
@@ -31,8 +33,14 @@ cp .env.example .env      # fill it in
 docker compose up -d
 ```
 
-Then, on each phone: open the site, trust the CA if you used `tls internal`,
-tap your name, and Add to Home Screen.
+Then, on each phone: open `https://calendar.home` (trust the CA first if
+connecting directly rather than through a front-door proxy with its own
+cert — see Caddyfile), tap your name, and Add to Home Screen.
+
+Point the wall display / TV kiosk at `https://calendar-read.home` instead —
+same app, but it always lands on the read-only calendar view (no "who's
+using this" prompt) and the layout it shows (today/week/month) is whatever
+the phone last set in Settings.
 
 ## Deploy & backup (on the VM)
 
@@ -79,7 +87,7 @@ serves it as-is; there is nothing to compile.
 | `family.html` · `person.html` | Family list; edit anyone (name, colour, photo, phone) |
 | `vacation.html` | Vacation setup and the pre-trip checklist |
 | `settings.html` | This phone, TV layout, options |
-| `tv.html` · `tv-week.html` · `tv-month.html` | The Pi display — point the kiosk at `/tv.html` |
+| `tv.html` · `tv-week.html` · `tv-month.html` | The Pi display — point the kiosk at `https://calendar-read.home` |
 
 Supporting files: `css/app.css` (all styling, one file), `js/api.js` (fetch with
 mock fallback), `js/ui.js` (render helpers, avatars), `js/tv.js` (TV chrome —
